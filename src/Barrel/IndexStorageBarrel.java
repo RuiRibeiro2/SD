@@ -10,36 +10,34 @@ import java.net.InetAddress;
 import java.io.IOException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+
+
 
 public class IndexStorageBarrel extends Thread implements Serializable, IndexStorageBarrelInterface
 {
     private String MULTICAST_ADDRESS = "224.3.2.1";
     private int MULTICAST_PORT = 4000;
 
+
     private HashMap<String, ArrayList<String>> indexMap; // <<word>, <url1, url2, ...>>
     private HashMap<String, ArrayList<String>> linksMap; // <<url>, <title, description, url1, url2, ...>>
 
 
-    public static void main(String[] args) {
-        IndexStorageBarrelInterface isbi = new IndexStorageBarrel();
+    public static void main(String[] args) throws RemoteException  {
+        IndexStorageBarrel barrel = new IndexStorageBarrel();
+        //RMI connection to Gateway
+        LocateRegistry.createRegistry(1099).rebind("barrel", barrel);
+        barrel.start();
 
-        try {
-            LocateRegistry.createRegistry(1099).rebind("barrel", isbi);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
     }
     public IndexStorageBarrel() {
         super("Index Storage Barrel " + (long) (Math.random() * 1000) + "now available");
         this.indexMap = new HashMap<>();
         this.linksMap = new HashMap<>();
-        try {
-            UnicastRemoteObject.exportObject(this, 0);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void run()
@@ -56,6 +54,9 @@ public class IndexStorageBarrel extends Thread implements Serializable, IndexSto
                 byte[] buffer = new byte[256];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
+                String data = new String(packet.getData(), 0, packet.getLength());
+                unpackData(data);
+
             }
 
         } catch (IOException e) {
@@ -68,14 +69,44 @@ public class IndexStorageBarrel extends Thread implements Serializable, IndexSto
 
     }
 
-    @Override
-    public List<String> searchWord(String word) throws FileNotFoundException, IOException
+    private void unpackData(String data)
     {
-        return null;
+        String[] dataElements = data.split(";", 0);
+        String[] typeElement = dataElements[0].split("|",0);
+        var type = typeElement[0];
+        if (type.equals("url_list")) {
+            var x = dataElements[1].split("|",0)[1];
+            int num_items = Integer.parseInt(x);
+            ArrayList<String> urlContent= new ArrayList<>(Arrays.asList(dataElements));
+            //Remove type element
+            urlContent.remove(0);
+            //Remove count element
+            urlContent.remove(0);
+            updateIndexMap(urlContent,num_items);
+        } else {
+            throw new IllegalArgumentException("Invalid type received: " + type);
+        }
+
+
+    }
+
+    private void updateIndexMap(ArrayList<String> urlContent,int num_items)
+    {
+        for(int i = 0; i < num_items; i++)
+        {
+            String[] entry = urlContent.get(i).split("|",0);
+        }
     }
 
     @Override
-    public List<String> searchPage(String word) throws FileNotFoundException, IOException
+    public ArrayList<String> searchWord(String word) throws FileNotFoundException, IOException
+    {
+        ArrayList<String> urls = indexMap.get(word);
+        return urls;
+    }
+
+    @Override
+    public ArrayList<String> searchPage(String word) throws FileNotFoundException, IOException
     {
         return null;
     }
