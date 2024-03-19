@@ -9,37 +9,26 @@ import java.rmi.registry.LocateRegistry;
 import java.net.InetAddress;
 import java.io.IOException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
-
-
-public class IndexStorageBarrel extends Thread implements Serializable, IndexStorageBarrelInterface
+class MulticastBarrel implements Runnable
 {
-    private String MULTICAST_ADDRESS = "224.3.2.1";
-    private int MULTICAST_PORT = 4000;
+    private String MULTICAST_ADDRESS;
+    private int MULTICAST_PORT;
+    private Map<String, List<String>> indexMap; // <<word>, <url1, url2, ...>>
+    private Map<String, List<String>> linksMap; // <<url>, <title, description, url1, url2, ...>>
 
-
-    private HashMap<String, ArrayList<String>> indexMap; // <<word>, <url1, url2, ...>>
-    private HashMap<String, ArrayList<String>> linksMap; // <<url>, <title, description, url1, url2, ...>>
-
-
-    public static void main(String[] args) throws RemoteException  {
-        IndexStorageBarrel barrel = new IndexStorageBarrel();
-        //RMI connection to Gateway
-        LocateRegistry.createRegistry(1099).rebind("barrel", barrel);
-        barrel.start();
-
-    }
-    public IndexStorageBarrel() {
-        super("Index Storage Barrel " + (long) (Math.random() * 1000) + "now available");
+    public MulticastBarrel(String address, int port)
+    {
+        this.MULTICAST_ADDRESS = address;
+        this.MULTICAST_PORT = port;
         this.indexMap = new HashMap<>();
+        this.indexMap.computeIfAbsent("universidade", k -> new ArrayList<>()).add("http://uc.pt");
+        this.indexMap.computeIfAbsent("mooshak", k -> new ArrayList<>()).add("http://mooshak.dei.pt");
         this.linksMap = new HashMap<>();
     }
-
+    @Override
     public void run()
     {
         MulticastSocket socket = null;
@@ -53,6 +42,7 @@ public class IndexStorageBarrel extends Thread implements Serializable, IndexSto
             {
                 byte[] buffer = new byte[256];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                System.out.println("Waiting for packets...");
                 socket.receive(packet);
                 String data = new String(packet.getData(), 0, packet.getLength());
                 unpackData(data);
@@ -64,9 +54,16 @@ public class IndexStorageBarrel extends Thread implements Serializable, IndexSto
         }finally {
             socket.close();
         }
+    }
 
+    public Map<String, List<String>> getIndexMap()
+    {
+        return indexMap;
+    }
 
-
+    public Map<String, List<String>> getLinksMap()
+    {
+        return linksMap;
     }
 
     private void unpackData(String data)
@@ -78,6 +75,7 @@ public class IndexStorageBarrel extends Thread implements Serializable, IndexSto
             var x = dataElements[1].split("|",0)[1];
             int num_items = Integer.parseInt(x);
             ArrayList<String> urlContent= new ArrayList<>(Arrays.asList(dataElements));
+
             //Remove type element
             urlContent.remove(0);
             //Remove count element
@@ -89,24 +87,66 @@ public class IndexStorageBarrel extends Thread implements Serializable, IndexSto
 
 
     }
-
     private void updateIndexMap(ArrayList<String> urlContent,int num_items)
     {
         for(int i = 0; i < num_items; i++)
         {
             String[] entry = urlContent.get(i).split("|",0);
+            String word = entry[0];
+            String url = entry[1];
+            if(this.indexMap.get(word) == null)
+            {
+                this.indexMap.computeIfAbsent(word, k -> new ArrayList<>()).add(url);
+            }
+            else
+            {
+                ArrayList<String> urls = (ArrayList<String>) this.indexMap.get(word);
+                urls.add(url);
+                this.indexMap.remove(word);
+                this.indexMap.put(word,urls);
+            }
         }
     }
 
-    @Override
-    public ArrayList<String> searchWord(String word) throws FileNotFoundException, IOException
+}
+
+
+public class IndexStorageBarrel extends UnicastRemoteObject implements Serializable, IndexStorageBarrelInterface
+{
+    private String MULTICAST_ADDRESS = "224.3.2.1";
+    //2 barrel threads for multicast handling
+    private MulticastBarrel barrel;
+    private int MULTICAST_PORT = 4000;
+
+    public static void main(String[] args) throws RemoteException
     {
-        ArrayList<String> urls = indexMap.get(word);
+        IndexStorageBarrelInterface isbi = new IndexStorageBarrel();
+        //RMI connection to Gateway
+        LocateRegistry.createRegistry(1100).rebind("barrel", isbi);
+        System.out.println("Registered");
+
+
+    }
+    public IndexStorageBarrel() throws RemoteException {
+        super();
+        this.barrel = new MulticastBarrel(this.MULTICAST_ADDRESS,this.MULTICAST_PORT);
+        Thread thread = new Thread(this.barrel);
+        thread.start();
+
+
+
+    }
+
+
+    @Override
+    public List<String> searchWord(String word) throws FileNotFoundException, IOException
+    {
+        List<String> urls = this.barrel.getIndexMap().get(word);
         return urls;
     }
 
     @Override
-    public ArrayList<String> searchPage(String word) throws FileNotFoundException, IOException
+    public List<String> searchPage(String word) throws FileNotFoundException, IOException
     {
         return null;
     }
