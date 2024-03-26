@@ -1,0 +1,15 @@
+chave1 | valor1; chave2 | valor dois
+
+type | login ; username | tintin ; password | unicorn
+
+type | status; logged | on; msg | Welcome to the app
+
+type | url_list ; item_count | 2; item_0_name | www.uc.pt; item_1_name | www. dei . uc . pt
+
+
+# To compile classes, run through terminal on src folder:
+# "javac RMIClient.java Gateway/RMIGateway.java Barrel/IndexStorageBarrel.java"
+
+# On different terminals, to run one of the classes:
+# (for storage barrel, run "java Barrel/IndexStorageBarrel")
+# "java <class name>.java"

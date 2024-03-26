@@ -1,7 +1,0 @@
-chave1 | valor1; chave2 | valor dois
-
-type | login ; username | tintin ; password | unicorn
-
-type | status; logged | on; msg | Welcome to the app
-
-type | url_list ; item_count | 2; item_0_name | www.uc.pt; item_1_name | www. dei . uc . pt
