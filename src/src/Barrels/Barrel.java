@@ -21,11 +21,8 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
 
     private String stats;
 
-    public Barrel(int index) throws IOException, RemoteException {
-        //this.INDEXFILE = "webapp-googol\\webapp-googol\\src\\main\\java\\com\\example\\webappgoogol\\Barrels\\BarrelFiles\\Barrel"
-                //+ index + ".txt";
-        //this.LINKSFILE = "webapp-googol\\webapp-googol\\src\\main\\java\\com\\example\\webappgoogol\\Barrels\\BarrelFiles\\Links"
-                //+ index + ".txt";
+    public Barrel(int index) throws IOException, RemoteException
+    {
         this.INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel" + index + ".txt";
         this.LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links" + index + ".txt";
         this.index = index;
@@ -36,20 +33,20 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
 
         File f = new File(INDEXFILE);
 
-        if (!f.exists()) {
-            f.createNewFile();
-        }
+        if (!f.exists()) f.createNewFile();
 
-        if (Configuration.COLD_START) {
+
+
+        if (Configuration.COLD_START)
+        {
             f.delete();
             f.createNewFile();
         }
 
         f = new File(LINKSFILE);
 
-        if (!f.exists()) {
-            f.createNewFile();
-        }
+        if (!f.exists()) f.createNewFile();
+
 
         if (Configuration.COLD_START) {
             f.delete();
@@ -242,7 +239,7 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
             }
             reader.close();
         } catch (IOException e) {
-            System.err.println("Erro ao ler o ficheiro dos links");
+            System.err.println("Error reading links file");
         }
 
         String otherUrls = "";
@@ -293,7 +290,8 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
         }
     }
 
-    private void writeToFile(ArrayList<String> data) throws IOException {
+    private void writeToFile(ArrayList<String> data) throws IOException
+    {
         List<String> lines = new ArrayList<String>();
         BufferedReader reader = new BufferedReader(new FileReader(INDEXFILE));
         String line;
@@ -355,7 +353,8 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
 
     // Find every link that points to a page
     @Override
-    public List<String> linksToAPage(String word) throws FileNotFoundException, IOException {
+    public List<String> searchLinks(String word) throws FileNotFoundException, IOException
+    {
         // this.linksMap format: url -> [title, context, referencedUrl1,
         // referencedUrl2,...]
 
@@ -399,15 +398,14 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
 
         byte[] buffer = statusString.getBytes();
 
-        // System.out.println(statusString);
-
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, Configuration.MULTICAST_PORT);
         socket.send(packet);
         socket.close();
     }
 
     @Override
-    public List<String> searchForWords(String word) throws FileNotFoundException, IOException {
+    public List<String> searchWords(String word) throws FileNotFoundException, IOException
+    {
 
         // Randomly throws RemoteException to simulate a crash
         if (Configuration.AUTO_FAIL_BARRELS) {
@@ -422,10 +420,10 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
         auxMap.clear();
 
         // Gets the links that each words
-        for (String palavra : words) {
-            palavra = palavra.toLowerCase();
-            if (indexMap.containsKey(palavra)) {
-                ArrayList<String> urls = indexMap.get(palavra);
+        for (String x : words) {
+            x = x.toLowerCase();
+            if (indexMap.containsKey(x)) {
+                ArrayList<String> urls = indexMap.get(x);
                 for (String url : urls) {
                     if (auxMap.containsKey(url)) {
                         auxMap.put(url, auxMap.get(url) + 1);
@@ -464,9 +462,11 @@ public class Barrel extends Thread implements BarrelInterface, Serializable {
                 String url2 = parts2[0];
                 int count1 = 0;
                 int count2 = 0;
-                for (String key : linksMap.keySet()) {
+                for (String key : linksMap.keySet())
+                {
                     ArrayList<String> urls = linksMap.get(key);
-                    if (urls.contains(url1)) {
+                    if (urls.contains(url1))
+                    {
                         count1++;
                     }
                     if (urls.contains(url2)) {

@@ -45,7 +45,7 @@ public class RMIClient
                         regular_messages();
                         break;
                     }
-                    gateway.IndexarUmNovoUrl(url);
+                    gateway.indexNewURL(url);
                     System.out.println("URL has been indexed to queue");
                     regular_messages();
                     break;
@@ -122,28 +122,26 @@ public class RMIClient
         }
 
         int pageNumber = 1;
-        List<String> resultList = searchModule.searchForWords(words);
+        List<String> resultList = searchModule.searchWords(words);
 
         int i = 0;
         while (true)
         {
             System.out.println("--------------------------------------------------------------------------");
-            System.out.println("Search results:");
-
             if (resultList.isEmpty() && pageNumber == 1) {
-                System.err.println("No results found");
+                System.out.println("No results found");
                 System.out.println("--------------------------------------------------------------------------");
                 regular_messages();
                 break;
             } else if (resultList.isEmpty()) {
-                System.err.println("No more results found");
+                System.out.println("No more results found");
                 System.out.println("--------------------------------------------------------------------------");
                 regular_messages();
                 break;
             }
 
             boolean info = false;
-
+            System.out.println("Search results:");
             for (int j = i; j < resultList.size(); j++) {
                 if (j == pageNumber * 10)
                     break;
@@ -158,7 +156,7 @@ public class RMIClient
             // If i not multiple of
             if (!info || i % 10 != 0)
             {
-                System.err.println("No more results");
+                System.out.println("No more results");
                 System.out.println("--------------------------------------------------------------------------");
                 regular_messages();
                 return;
@@ -183,10 +181,10 @@ public class RMIClient
         System.out.print("Insert hyperlink to webpage: ");
         scanner.nextLine();
         String url = scanner.nextLine();
-        List<String> links = (searchModule.linksToAPage(url));
+        List<String> links = (searchModule.searchLinks(url));
 
         if (links.isEmpty()) {
-            System.err.println("No results found");
+            System.out.println("No results found");
         } else {
             System.out.println("Search results:");
             for (String link : links) {
@@ -198,13 +196,13 @@ public class RMIClient
 
     public static void main(String[] args) throws Exception {
         boolean connected = false;
-        RMIGatewayInterface searchModule = null;
+        RMIGatewayInterface gateway = null;
         while (!connected) {
             try {
-                searchModule = (RMIGatewayInterface) Naming.lookup("rmi://localhost/gateway");
+                gateway = (RMIGatewayInterface) Naming.lookup("rmi://localhost/gateway");
                 connected = true;
             } catch (Exception e) {
-                System.err.println("Error connecting to server, retrying in 3 segundos");
+                System.err.println("Error connecting to server, retrying in 3 seconds");
                 Thread.sleep(3000);
             }
         }
@@ -213,9 +211,9 @@ public class RMIClient
         client.login = false;
 
         try {
-            client.run(searchModule);
+            client.run(gateway);
         } catch (Exception e) {
-            System.err.println("Error connecting to server, retrying in 3 segundos");
+            System.err.println("Error connecting to server, retrying in 3 seconds");
             Thread.sleep(3000);
             main(args);
         }

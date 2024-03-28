@@ -29,15 +29,17 @@ public class AdminPage {
 
     }
 
-    private void get_active_downloaders_and_barrels() {
+    private void get_active_downloaders_and_barrels()
+    {
         MulticastSocket socket = null;
-
-        try {
+        try
+        {
             socket = new MulticastSocket(Configuration.MULTICAST_PORT);
             InetAddress group = InetAddress.getByName(Configuration.MULTICAST_ADDRESS);
             socket.joinGroup(group);
 
-            while (true) {
+            while (true)
+            {
                 byte[] buffer = new byte[16384];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);

@@ -29,49 +29,34 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         adminPage = new AdminPage(searchDictionary);
     }
 
-    private String separarPalavrasPorLetra(String frase) {
-        String[] palavras = frase.split(" ");
-        String palavrasAteM = "";
-        for (String palavra : palavras) {
-            if (palavra.toLowerCase().charAt(0) < 'm') {
-                palavrasAteM += palavra + " ";
+    private String separateWordsAlphabet(String frase) {
+        String[] words = frase.split(" ");
+        String wordsA_M = "";
+        for (String x : words) {
+            if (x.toLowerCase().charAt(0) < 'm') {
+                wordsA_M += x + " ";
             }
         }
-        return palavrasAteM;
+        return wordsA_M;
     }
 
-    private String separarPalavrasPorLetra2(String frase) {
-        String[] palavras = frase.split(" ");
-        String palavrasDeNateZ = "";
-        for (String palavra : palavras) {
-            if (palavra.toLowerCase().charAt(0) >= 'm') {
-                palavrasDeNateZ += palavra + " ";
+    private String separateWordsAlphabet2(String frase)
+    {
+        String[] words = frase.split(" ");
+        String wordsN_Z = "";
+        for (String x : words) {
+            if (x.toLowerCase().charAt(0) >= 'm') {
+                wordsN_Z += x + " ";
             }
         }
-        return palavrasDeNateZ;
+        return wordsN_Z;
     }
 
-    private int gerarNumeroImparAleatorio(int n) {
+    private int generateRandomNumber() {return (int) (Math.random() * Configuration.NUM_BARRELS) + 1;}
 
-        int numeroImparAleatorio = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
-        while (numeroImparAleatorio % 2 == 0) {
-            numeroImparAleatorio = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
-        }
-        // System.out.println("Numero impar: " + numeroImparAleatorio);
-        return numeroImparAleatorio;
-    }
-
-    private int gerarNumeroPar(int n) {
-        int numeroPar = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
-        while (numeroPar % 2 == 1) {
-            numeroPar = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
-        }
-        // System.out.println("Numero par: " + numeroPar);
-        return numeroPar;
-    }
 
     @Override
-    public List<String> searchForWords(String word)
+    public List<String> searchWords(String word)
             throws NotBoundException, FileNotFoundException, IOException {
 
         // Oo barrels pares contem informação sobre as palavras que começam pelas letras
@@ -81,55 +66,55 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
 
         List<String> result_par = new ArrayList<String>();
         List<String> result_impar = new ArrayList<String>();
-        String palavrasAteM = "";
-        String palavrasDeNateZ = "";
+        String wordsA_M = "";
+        String wordsN_Z = "";
 
         try {
-            palavrasAteM = separarPalavrasPorLetra(word);
-            palavrasDeNateZ = separarPalavrasPorLetra2(word);
+            wordsA_M = separateWordsAlphabet(word);
+            wordsN_Z = separateWordsAlphabet2(word);
         } catch (Exception e) {
-            System.out.println("Erro ao separar palavras por letra");
+            System.out.println("Error separating words alphabetically.");
         }
 
-        if (palavrasAteM != "") {
-            int randomBarrel = gerarNumeroPar(Configuration.NUM_BARRELS);
+        if (wordsA_M != "") {
+            int randomBarrel = generateRandomNumber();
             boolean connected = false;
 
             while (!connected) {
                 try {
                     BarrelInterface barrel = (BarrelInterface) Naming
                             .lookup("rmi://localhost/Barrel" + randomBarrel);
-                    result_par = barrel.searchForWords(palavrasAteM);
+                    result_par = barrel.searchWords(wordsA_M);
                     connected = true;
                 } catch (RemoteException e) {
                     // Barrel is not available, try another one
-                    randomBarrel = gerarNumeroPar(Configuration.NUM_BARRELS);
+                    randomBarrel = generateRandomNumber();
                 }
             }
         }
 
-        if (palavrasDeNateZ != "") {
-            int randomBarrel = gerarNumeroImparAleatorio(Configuration.NUM_BARRELS);
+        if (wordsN_Z != "") {
+            int randomBarrel = generateRandomNumber();
             boolean connected = false;
 
             while (!connected) {
                 try {
                     BarrelInterface barrel = (BarrelInterface) Naming
                             .lookup("rmi://localhost/Barrel" + randomBarrel);
-                    result_impar = barrel.searchForWords(palavrasDeNateZ);
+                    result_impar = barrel.searchWords(wordsN_Z);
                     connected = true;
                 } catch (RemoteException e) {
                     // Barrel is not available, try another one
-                    randomBarrel = gerarNumeroImparAleatorio(Configuration.NUM_BARRELS);
+                    randomBarrel = generateRandomNumber();
                 }
             }
         }
 
         List<String> result = new ArrayList<String>();
 
-        if (palavrasAteM == "") {
+        if (wordsA_M == "") {
             result = result_impar;
-        } else if (palavrasDeNateZ == "") {
+        } else if (wordsN_Z == "") {
             result = result_par;
         } else {
             // Get the intersection of the two lists
@@ -151,7 +136,8 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
 
     }
 
-    private void sortSearchDictionary() {
+    private void sortSearchDictionary()
+    {
         // Sort the search dictionary by the number of times a word has been searched
         List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(
                 this.searchDictionary.entrySet());
@@ -167,25 +153,29 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
             temp.put(aa.getKey(), aa.getValue());
         }
         this.searchDictionary = temp;
-
         adminPage.updateHashMap(temp);
     }
 
     @Override
-    public List<String> linksToAPage(String word) throws FileNotFoundException, IOException, NotBoundException {
+    public List<String> searchLinks(String word) throws FileNotFoundException, IOException, NotBoundException
+    {
         int randomBarrel = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
         BarrelInterface barrel = null;
         List<String> result = null;
         boolean connected = false;
 
-        while (!connected) {
-            try {
+        while (!connected)
+        {
+            try
+            {
                 barrel = (BarrelInterface) Naming.lookup("rmi://localhost/Barrel" + randomBarrel);
-                result = barrel.linksToAPage(word);
+                result = barrel.searchLinks(word);
                 connected = true;
-            } catch (RemoteException e) {
+            }
+            catch (RemoteException e)
+            {
                 // Try again with another barrel
-                randomBarrel = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
+                randomBarrel = generateRandomNumber();
             }
         }
 
@@ -193,7 +183,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     }
 
     @Override
-    public void IndexarUmNovoUrl(String url) throws RemoteException, IOException, NotBoundException {
+    public void indexNewURL(String url) throws RemoteException, IOException, NotBoundException {
         // Send the url to the urlqueue and the downloader will take care of the rest
         // via tcp
         Socket socket = new Socket("localhost", Configuration.PORT_B);
