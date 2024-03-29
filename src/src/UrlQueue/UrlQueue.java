@@ -1,6 +1,6 @@
 package src.UrlQueue;
 
-import src.Configuration;
+import src.RMIGateway.Configuration;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -16,8 +16,8 @@ public class UrlQueue {
     public UrlQueue() {
         queue = new LinkedList<String>();
         visited = new ArrayList<String>();
-        queue.add("http://127.0.0.1:5500/Tests/Test_Site1.html");
-        visited.add("http://127.0.0.1:5500/Tests/Test_Site1.html");
+        //queue.add("http://127.0.0.1:5500/Tests/Test_Site1.html");
+        //visited.add("http://127.0.0.1:5500/Tests/Test_Site1.html");
     }
 
     public void addUrl(String url, boolean resend) {

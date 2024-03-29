@@ -1,6 +1,6 @@
 package src.UrlQueue;
 
-import src.Configuration;
+import src.RMIGateway.Configuration;
 
 import java.io.BufferedReader;
 import java.io.IOException;

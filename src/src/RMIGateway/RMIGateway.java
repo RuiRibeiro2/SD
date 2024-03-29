@@ -1,10 +1,7 @@
 package src.RMIGateway;
 
-import src.AdminPage;
-import src.Barrels.Barrel;
-import src.Barrels.BarrelInterface;
-import src.Configuration;
-import src.Downloader;
+import src.RMIInterface.RMIBarrelInterface;
+import src.RMIInterface.RMIGatewayInterface;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -81,13 +78,20 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
             boolean connected = false;
 
             while (!connected) {
-                try {
-                    BarrelInterface barrel = (BarrelInterface) Naming
+                try
+                {
+                    RMIBarrelInterface barrel = (RMIBarrelInterface) Naming
                             .lookup("rmi://localhost/Barrel" + randomBarrel);
                     result_par = barrel.searchWords(wordsA_M);
                     connected = true;
-                } catch (RemoteException e) {
+                }
+                catch (Exception e) {
                     // Barrel is not available, try another one
+
+                    adminPage.updateBarrels(randomBarrel);
+                    // Communicate with Admin Page and notify that this barrel is Offline
+
+
                     randomBarrel = generateRandomNumber();
                 }
             }
@@ -99,11 +103,11 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
 
             while (!connected) {
                 try {
-                    BarrelInterface barrel = (BarrelInterface) Naming
+                    RMIBarrelInterface barrel = (RMIBarrelInterface) Naming
                             .lookup("rmi://localhost/Barrel" + randomBarrel);
                     result_impar = barrel.searchWords(wordsN_Z);
                     connected = true;
-                } catch (RemoteException e) {
+                } catch (Exception e) {
                     // Barrel is not available, try another one
                     randomBarrel = generateRandomNumber();
                 }
@@ -160,7 +164,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     public List<String> searchLinks(String word) throws FileNotFoundException, IOException, NotBoundException
     {
         int randomBarrel = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
-        BarrelInterface barrel = null;
+        RMIBarrelInterface barrel = null;
         List<String> result = null;
         boolean connected = false;
 
@@ -168,7 +172,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         {
             try
             {
-                barrel = (BarrelInterface) Naming.lookup("rmi://localhost/Barrel" + randomBarrel);
+                barrel = (RMIBarrelInterface) Naming.lookup("rmi://localhost/Barrel" + randomBarrel);
                 result = barrel.searchLinks(word);
                 connected = true;
             }
@@ -206,11 +210,6 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         LocateRegistry.createRegistry(1099);
         Naming.rebind("gateway", gateway);
 
-        for (int i = 1; i <= Configuration.NUM_BARRELS; i++)
-        {
-            Barrel b = new Barrel(i);
-            b.start();
-        }
 
         for (int i = 1; i <= Configuration.NUM_DOWNLOADERS; i++)
         {
