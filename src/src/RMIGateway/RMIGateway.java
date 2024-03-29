@@ -60,9 +60,8 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         // [a-m] e os impares [n-z]
         // É necessário verificar em qual dos dois barrels a palavra se encontra ou se
         // se encontra em ambos
-
-        List<String> result_par = new ArrayList<String>();
-        List<String> result_impar = new ArrayList<String>();
+        List<String> resultA_M = new ArrayList<String>();
+        List<String> resultN_Z = new ArrayList<String>();
         String wordsA_M = "";
         String wordsN_Z = "";
 
@@ -81,17 +80,14 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
                 try
                 {
                     RMIBarrelInterface barrel = (RMIBarrelInterface) Naming
-                            .lookup("rmi://localhost/Barrel" + randomBarrel);
-                    result_par = barrel.searchWords(wordsA_M);
+                            .lookup("rmi://"+Configuration.barrelsIP+"/Barrel" + randomBarrel);
+                    resultA_M = barrel.searchWords(wordsA_M);
                     connected = true;
                 }
-                catch (Exception e) {
-                    // Barrel is not available, try another one
-
-                    adminPage.updateBarrels(randomBarrel);
+                catch (Exception e)
+                {
                     // Communicate with Admin Page and notify that this barrel is Offline
-
-
+                    // adminPage.updateOfflineBarrels(randomBarrel);
                     randomBarrel = generateRandomNumber();
                 }
             }
@@ -102,13 +98,17 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
             boolean connected = false;
 
             while (!connected) {
-                try {
+                try
+                {
                     RMIBarrelInterface barrel = (RMIBarrelInterface) Naming
-                            .lookup("rmi://localhost/Barrel" + randomBarrel);
-                    result_impar = barrel.searchWords(wordsN_Z);
+                            .lookup("rmi://"+Configuration.barrelsIP+"/Barrel" + randomBarrel);
+                    resultN_Z = barrel.searchWords(wordsN_Z);
                     connected = true;
-                } catch (Exception e) {
-                    // Barrel is not available, try another one
+                }
+                catch (Exception e)
+                {
+                    // Communicate with Admin Page and notify that this barrel is Offline
+                    // adminPage.updateOfflineBarrels(randomBarrel);
                     randomBarrel = generateRandomNumber();
                 }
             }
@@ -117,13 +117,13 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         List<String> result = new ArrayList<String>();
 
         if (wordsA_M == "") {
-            result = result_impar;
+            result = resultN_Z;
         } else if (wordsN_Z == "") {
-            result = result_par;
+            result = resultA_M;
         } else {
             // Get the intersection of the two lists
-            for (String s : result_par) {
-                if (result_impar.contains(s)) {
+            for (String s : resultA_M) {
+                if (resultN_Z.contains(s)) {
                     result.add(s);
                 }
             }
@@ -172,11 +172,11 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         {
             try
             {
-                barrel = (RMIBarrelInterface) Naming.lookup("rmi://localhost/Barrel" + randomBarrel);
+                barrel = (RMIBarrelInterface) Naming.lookup("rmi://"+Configuration.barrelsIP+"/Barrel" + randomBarrel);
                 result = barrel.searchLinks(word);
                 connected = true;
             }
-            catch (RemoteException e)
+            catch (Exception e)
             {
                 // Try again with another barrel
                 randomBarrel = generateRandomNumber();
@@ -187,7 +187,8 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     }
 
     @Override
-    public void indexNewURL(String url) throws RemoteException, IOException, NotBoundException {
+    public void indexNewURL(String url) throws RemoteException, IOException, NotBoundException
+    {
         // Send the url to the urlqueue and the downloader will take care of the rest
         // via tcp
         Socket socket = new Socket("localhost", Configuration.PORT_B);
@@ -199,10 +200,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         socket.close();
     }
 
-    @Override
-    public boolean login(String username, String password) throws RemoteException {
-        return adminPage.login(username, password);
-    }
+
 
     public static void main(String[] args) throws IOException, NotBoundException
     {

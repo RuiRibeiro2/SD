@@ -47,9 +47,4 @@ public class UrlQueue {
         queueReceive.start();
     }
 
-    public void printQueue() {
-        for (String url : queue) {
-            System.out.println(url);
-        }
-    }
 }

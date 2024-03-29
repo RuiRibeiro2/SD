@@ -19,6 +19,5 @@ public interface RMIGatewayInterface extends Remote
 
     public void indexNewURL(String url) throws RemoteException, IOException, NotBoundException;
 
-    public boolean login(String username, String password) throws RemoteException;
 
 }

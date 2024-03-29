@@ -119,6 +119,7 @@ public class Downloader extends Thread {
         }
     }
 
+    //Download process filters special characters: "|" ";" "\n"
     private void download() {
         String title = doc.title();
         try {
@@ -126,16 +127,17 @@ public class Downloader extends Thread {
         } catch (NullPointerException e) {
             return;
         }
+
         this.title = title;
         this.title = this.title.replace("|", "");
         this.title = this.title.replace(";", "");
         this.title = this.title.replace("\n", "");
 
         String[] words = doc.text().split(" ");
-        for (String word : words) {
+        for (String word : words)
+        {
             if (word.contains("|") || word.contains(";") || word.contains("\n"))
                 continue;
-
             this.words += word + ";";
         }
 
@@ -149,7 +151,8 @@ public class Downloader extends Thread {
         }
     }
 
-    private void sendWords() throws Exception {
+    private void sendWords() throws Exception
+    {
 
         // Protocol :
         // type | url; item_count | number; url | www.example.com; referenced_urls |
@@ -158,12 +161,14 @@ public class Downloader extends Thread {
         String referencedUrls = "type | url; item_count | " + this.links.size() + "; url | " + this.url
                 + "; referenced_urls | ";
 
-        if (this.links.size() == 0)
+        if (this.links.isEmpty())
             referencedUrls += "None; ";
 
         int linkCount = 0;
-        for (String link : this.links) {
-            if (linkCount++ == Configuration.MAXIMUM_REFERENCE_LINKS) {
+        for (String link : this.links)
+        {
+            if (linkCount++ == Configuration.MAXIMUM_REFERENCE_LINKS)
+            {
                 referencedUrls += "; ";
                 break;
             }

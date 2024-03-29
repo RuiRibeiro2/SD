@@ -1,5 +1,6 @@
 package src.RMIClient;
 
+import src.RMIGateway.Configuration;
 import src.RMIInterface.RMIGatewayInterface;
 
 import java.io.FileNotFoundException;
@@ -35,6 +36,10 @@ public class RMIClient
                 continue;
             }
             switch (command) {
+                case 0:
+                    printMenu();
+                    regular_messages();
+                    break;
                 case 1:
                     System.out.println("--------------------------------------------------------------------------");
                     System.out.print("Insert URL to webpage: ");
@@ -66,15 +71,6 @@ public class RMIClient
                 case 5:
                     exit = true;
                     break;
-                case 6:
-                    printMenu();
-                    regular_messages();
-                    break;
-                case 7:
-                    System.out.println("--------------------------------------------------------------------------");
-                    checkLogin(gateway, scanner, 7);
-                    regular_messages();
-                    break;
                 default:
                     System.out.println("--------------------------------------------------------------------------");
                     invalid_prompt();
@@ -94,7 +90,7 @@ public class RMIClient
     }
     private void regular_messages()
     {
-        System.out.println("Type '6' to display menu again");
+        System.out.println("Type '0' to display menu again");
         System.out.print("Type in new command: ");
     }
     private boolean checkSearchFormat(String query) {
@@ -200,7 +196,7 @@ public class RMIClient
         RMIGatewayInterface gateway = null;
         while (!connected) {
             try {
-                gateway = (RMIGatewayInterface) Naming.lookup("rmi://localhost/gateway");
+                gateway = (RMIGatewayInterface) Naming.lookup("rmi://"+ Configuration.gatewayIP+"/gateway");
                 connected = true;
             } catch (Exception e) {
                 System.err.println("Error connecting to server, retrying in 3 seconds");
@@ -223,13 +219,12 @@ public class RMIClient
 
     private void printMenu() {
         System.out.println("---------------------------------MENU-------------------------------------");
+        System.out.println("0 - Refresh menu");
         System.out.println("1 - Index a new URL");
         System.out.println("2 - Search webpages that contain certain terms");
         System.out.println("3 - Consult lists of hyperlinks that are oonnected to a certain webpage");
         System.out.println("4 - Open real-time admin page");
-        System.out.println("5 - Close");
-        System.out.println("6 - Back to menu");
-        System.out.println("7 - Login");
+        System.out.println("5 - Exit");
         System.out.println("--------------------------------------------------------------------------");
     }
 

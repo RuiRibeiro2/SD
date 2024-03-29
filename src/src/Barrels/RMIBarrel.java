@@ -16,18 +16,18 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
 {
     private String INDEXFILE;
     private String LINKSFILE;
-    private int index;
+    private int id;
     private HashMap<String, ArrayList<String>> indexMap; // <<word>, <url1, url2, ...>>
     private HashMap<String, ArrayList<String>> linksMap; // <<url>, <title, description, url1, url2, ...>>
     private HashMap<String, Integer> auxMap;
 
     private String stats;
 
-    public RMIBarrel(int index) throws IOException, RemoteException
+    public RMIBarrel(int id) throws IOException, RemoteException
     {
-        this.INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel"+index+".txt";
-        this.LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links"+index+".txt";
-        this.index = index;
+        this.INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel"+ id +".txt";
+        this.LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links"+ id +".txt";
+        this.id = id;
         this.indexMap = new HashMap<>();
         this.linksMap = new HashMap<>();
         this.auxMap = new HashMap<>();
@@ -36,7 +36,6 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         File f = new File(INDEXFILE);
 
         if (!f.exists()) f.createNewFile();
-
 
 
         if (Configuration.COLD_START)
@@ -58,7 +57,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
 
         UnicastRemoteObject.exportObject(this, 0);
-        Naming.rebind("rmi://localhost/Barrel" + index, this);
+        Naming.rebind("rmi://localhost/Barrel" + id, this);
     }
 
     public static void main(String[] args) throws IOException
@@ -180,7 +179,8 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         return data;
     }
 
-    private void writeToHashMaps() {
+    private void writeToHashMaps()
+    {
 
         synchronized (linksMap) {
             try {
@@ -191,7 +191,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                     String urlString = parts[0];
 
                     if (parts.length != 3) {
-                        System.out.println("Barrel[" + this.index + "] [No description] failed to store in barrel");
+                        System.out.println("Barrel[" + this.id + "] [No description] failed to store in barrel");
                         reader.close();
                         return;
                     }
@@ -285,7 +285,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
             }
 
             if (context == null || context.equals("")) {
-                System.out.println("Barrel[" + this.index + "] [No description] failed to store in barrel");
+                System.out.println("Barrel[" + this.id + "] [No description] failed to store in barrel");
                 return;
             }
 
@@ -330,7 +330,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                 continue;
             }
 
-            if (this.index % 2 == 0) {
+            if (this.id % 2 == 0) {
                 if (word.toLowerCase().charAt(0) >= 'm')
                     continue;
             } else {
@@ -374,7 +374,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         if (Configuration.AUTO_FAIL_BARRELS) {
             int random = (int) (Math.random() * 2) + 1;
             if (random == 1) {
-                System.out.println("Barrel[" + this.index + "] simulated a crash while searching for words");
+                System.out.println("Barrel[" + this.id + "] simulated a crash while searching for words");
                 throw new RemoteException();
             }
         }
@@ -406,7 +406,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         InetAddress group = InetAddress.getByName(Configuration.MULTICAST_ADDRESS);
         MulticastSocket socket = new MulticastSocket(Configuration.MULTICAST_PORT);
 
-        String statusString = "type | Barrel; index | " + this.index + "; status | " + status + "; ip | "
+        String statusString = "type | Barrel; index | " + this.id + "; status | " + status + "; ip | "
                 + Configuration.MULTICAST_ADDRESS + "; port | " + Configuration.MULTICAST_PORT + ";";
 
         byte[] buffer = statusString.getBytes();
@@ -426,7 +426,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         if (Configuration.AUTO_FAIL_BARRELS) {
             int random = (int) (Math.random() * 2) + 1;
             if (random == 1) {
-                System.out.println("Barrel[" + this.index + "] simulated a crash while searching for words");
+                System.out.println("Barrel[" + this.id + "] simulated a crash while searching for words");
                 throw new RemoteException();
             }
         }

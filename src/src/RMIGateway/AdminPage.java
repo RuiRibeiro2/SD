@@ -1,8 +1,6 @@
 package src.RMIGateway;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -12,24 +10,24 @@ import java.util.HashMap;
 public class AdminPage {
     private ArrayList<String> downloaders;
     private ArrayList<String> barrels;
-    private HashMap<String, Integer> searchDictionary;
+    private HashMap<String, Integer> relevanceDictionary;
 
     private String stringMenu;
 
-    public AdminPage(HashMap<String, Integer> searchDictionary) {
+    public AdminPage(HashMap<String, Integer> relevanceDictionary) {
         this.downloaders = new ArrayList<String>();
         this.barrels = new ArrayList<String>();
-        this.searchDictionary = searchDictionary;
+        this.relevanceDictionary = relevanceDictionary;
     }
 
     public void showMenu() {
-        inicialize_arrays();
+        inicializeArrays();
         stringMenu = generatePanelString();
-        get_active_downloaders_and_barrels();
+        getActiveDownloadersAndBarrels();
 
     }
 
-    private void get_active_downloaders_and_barrels()
+    private void getActiveDownloadersAndBarrels()
     {
         MulticastSocket socket = null;
         try
@@ -48,7 +46,6 @@ public class AdminPage {
                 System.out.println(msg);
                 update(msg);
 
-
                 stringMenu = generatePanelString();
             }
 
@@ -65,21 +62,29 @@ public class AdminPage {
 
         // Protocol : "type | Downloader; status | Active; url | www.example.com;
 
-        if (msg_split[0].split("\\|")[1].trim().equals("Downloader")) {
+        if (msg_split[0].split("\\|")[1].trim().equals("Downloader"))
+        {
             int index = Integer.parseInt(msg_split[1].split("\\|")[1].trim());
             String status = msg_split[2].split("\\|")[1].trim();
             String url = msg_split[3].split("\\|")[1].trim();
-
             this.downloaders.set(index - 1, status + " - " + url);
-        } else if (msg_split[0].split("\\|")[1].trim().equals("Barrel")) {
+        }
+        else if (msg_split[0].split("\\|")[1].trim().equals("Barrel"))
+        {
             int index = Integer.parseInt(msg_split[1].split("\\|")[1].trim());
             String status = msg_split[2].split("\\|")[1].trim();
             String ip = msg_split[3].split("\\|")[1].trim();
             String port = msg_split[4].split("\\|")[1].trim();
-
-            this.barrels.set(index - 1, status + "-" + ip + " - " + port);
+            this.barrels.set(index - 1, status + " - " + ip + " - " + port);
         }
     }
+
+    public void updateOfflineBarrels(int id)
+    {
+        this.barrels.set(id,"Offline");
+    }
+
+
 
     private String generatePanelString()
     {
@@ -97,18 +102,18 @@ public class AdminPage {
         }
 
         sb.append("\n------- Most Frequent Searches -------\n");
-        if (this.searchDictionary.isEmpty()) {
+        if (this.relevanceDictionary.isEmpty()) {
             for (int i = 0; i < 10; i++) {
                 int aux = i + 1;
                 sb.append("Search[" + aux + "] None\n");
             }
         } else {
 
-            for (int i = 0; i < 10 && i < this.searchDictionary.size(); i++) {
+            for (int i = 0; i < 10 && i < this.relevanceDictionary.size(); i++) {
                 int aux = i + 1;
-                if (this.searchDictionary.containsKey(this.searchDictionary.keySet().toArray()[i])) {
-                    sb.append("Search[" + aux + "]: " + this.searchDictionary.keySet().toArray()[i] + " - "
-                            + this.searchDictionary.get(this.searchDictionary.keySet().toArray()[i])
+                if (this.relevanceDictionary.containsKey(this.relevanceDictionary.keySet().toArray()[i])) {
+                    sb.append("Search[" + aux + "]: " + this.relevanceDictionary.keySet().toArray()[i] + " - "
+                            + this.relevanceDictionary.get(this.relevanceDictionary.keySet().toArray()[i])
                             + "\n");
                 }
             }
@@ -117,8 +122,7 @@ public class AdminPage {
         return sb.toString();
     }
 
-    private void inicialize_arrays() {
-        // Inicialize the downloaders with "Waiting";
+    private void inicializeArrays() {
         for (int i = 0; i < Configuration.NUM_DOWNLOADERS; i++) {
             this.downloaders.add("Waiting");
         }
@@ -129,40 +133,16 @@ public class AdminPage {
 
     public void updateHashMap(HashMap<String, Integer> dic)
     {
-
-        this.searchDictionary = dic;
+        this.relevanceDictionary = dic;
         stringMenu = generatePanelString();
     }
 
-    public void updateBarrels(int id)
-    {
 
-    }
 
     public String getStringMenu() {
         return this.stringMenu;
     }
 
-    public boolean login(String username, String password)
-    {
-        boolean result = false;
 
-        try {
-            FileInputStream file = new FileInputStream(Configuration.CREDENTIALS_FILE);
-            ObjectInputStream in = new ObjectInputStream(file);
-
-            HashMap<String, String>users = (HashMap<String, String>) in.readObject();
-
-            if (users.containsKey(username) && users.get(username).equals(password)) {
-                result = true;
-            }
-
-            in.close();
-        } catch (Exception e) {
-            System.out.println("Erro ao ler ficheiro de credenciais");
-        }
-
-        return result;
-    }
 
 }
