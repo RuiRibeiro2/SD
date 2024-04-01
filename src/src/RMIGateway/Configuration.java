@@ -2,17 +2,13 @@ package src.RMIGateway;
 
 public class Configuration
 {
-    public static final String CREDENTIALS_FILE = "credentials.bin";
-    public boolean DEBUG = true;
-
     // Special scenarios triggers
-    public static boolean COLD_START = false;
-    public static boolean AUTO_FAIL_BARRELS = false;
-    public static boolean AUTO_FAIL_DOWNLOADERS = false;
+    public static boolean SABOTAGE_BARRELS = false;
+    public static boolean SABOTAGE_DOWNLOADERS = false;
 
     // IP addresses for RMI connections
-    public static String gatewayIP = "localhost";
-    public static String barrelsIP = "localhost";
+    public static String IP_GATEWAY = "localhost";
+    public static String IP_BARRELS = "localhost";
 
     // TCP ports
     public static final int PORT_A = 8080;
@@ -24,14 +20,12 @@ public class Configuration
 
     //Number of downloaders and barrels
     public static final int NUM_DOWNLOADERS = 3;
-    public static final int NUM_BARRELS = 2;
+    public static final int NUM_BARRELS = 4;
 
     // Size of context in links
+    public static final int MAX_PAGE_DATA = 65534;
     public static final int CONTEXT_SIZE = 15;
-
-    public static final int MAXIMUM_REFERENCE_LINKS = 10;
-
-    public static final int PAGE_SIZE = 10;
+    public static final int MAX_REF_LINKS = 10;
 
 
 

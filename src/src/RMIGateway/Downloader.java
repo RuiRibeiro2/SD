@@ -36,70 +36,75 @@ public class Downloader extends Thread {
             e.printStackTrace();
         }
 
-        while (true) {
-
+        while (true)
+        {
             clear();
-
-            try {
+            try // Tries to retrieve URL from queue
+            {
                 this.url = getUrl();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException e)
+            {
                 System.err.println("Downloader[" + this.ID + "] [ON WHILE TRUE] failed to get url from queue");
             }
-
-            if (this.url == null) {
+            if (this.url == null)
+            {
                 System.out.println("No more urls to download");
                 continue;
             }
-
             sendStatus("Active");
 
-            try {
+            try
+            {
+                // Using jsoup parser
                 this.doc = Jsoup.connect(this.url).get();
-
-                // This url doesn't need to be sent to the queue
-                // It failed to download, because it is not a valid url
-            } catch (ConnectException e) {
+                // Invalid url
+            } catch (ConnectException e)
+            {
                 System.out.println(
                         "Downloader[" + this.ID + "] [Connection failed] failed to connect to url: " + this.url);
-                try {
+                try
+                {
                     this.links.clear();
                     this.links.add(this.url);
                     sendLinkToQueue(true);
-                } catch (Exception e1) {
+                } catch (Exception e1)
+                {
                     System.err.println("Downloader[" + this.ID + "] failed to send url to queue");
                 }
                 continue;
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 System.err.println("Downloader[" + this.ID + "] [Not valid] failed to download url: " + this.url);
                 continue;
             }
 
-            try {
-
-                if (Configuration.AUTO_FAIL_DOWNLOADERS) {
+            try
+            {
+                if (Configuration.SABOTAGE_DOWNLOADERS)
+                {
                     int random = (int) (Math.random() * 5) + 1;
-                    if (this.ID == random) {
+                    if (this.ID == random)
+                    {
                         System.out.println("Downloader[" + this.ID + "] Simulated a crash");
                         throw new Exception();
                     }
                 }
-
                 download();
+                if (this.title == null || this.title.isEmpty())
+                {
 
-                if (this.title == null || this.title.equals("")) {
-                    // This url doesn't need to be sent to the queue
-                    // It doesn't have a title, so it's not a valid url
+                    // URL without title is invalid
                     System.err.println("Downloader[" + this.ID + "] [No title] failed to download url: " + this.url);
                     continue;
                 }
-
                 sendWords();
                 sendLinkToQueue(false);
 
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 System.err.println("Downloader[" + this.ID + "] stopped working!");
 
-                // Send current link to queue
+                // Resend current link to queue
                 try {
                     this.links.clear();
                     this.links.add(this.url);
@@ -107,21 +112,19 @@ public class Downloader extends Thread {
                 } catch (Exception e1) {
                     System.err.println("Downloader[" + this.ID + "] failed to send url to queue");
                 }
-
                 try {
                     sendStatus("Offline");
                     return;
                 } catch (Exception e1) {
-                    System.err.println("Faild to send Downloader[" + this.ID + "] status");
+                    System.err.println("Failed to send Downloader[" + this.ID + "] status");
                 }
-                continue;
             }
         }
     }
 
     //Download process filters special characters: "|" ";" "\n"
     private void download() {
-        String title = doc.title();
+        String title;
         try {
             title = doc.title();
         } catch (NullPointerException e) {
@@ -136,14 +139,14 @@ public class Downloader extends Thread {
         String[] words = doc.text().split(" ");
         for (String word : words)
         {
-            if (word.contains("|") || word.contains(";") || word.contains("\n"))
-                continue;
+            if (word.contains("|") || word.contains(";") || word.contains("\n")) continue;
             this.words += word + ";";
         }
 
         Elements links = doc.select("a[href]");
         for (Element link : links) {
             String url = link.attr("abs:href");
+            // Removing special characters to prevent future conflicts
             url = url.replace("|", "");
             url = url.replace(";", "");
             url = url.replace("\n", "");
@@ -154,33 +157,30 @@ public class Downloader extends Thread {
     private void sendWords() throws Exception
     {
 
-        // Protocol :
+        // Protocol Multicast :
         // type | url; item_count | number; url | www.example.com; referenced_urls |
         // url1 url2 url3; title | title; words | word1 word2 word3
 
         String referencedUrls = "type | url; item_count | " + this.links.size() + "; url | " + this.url
                 + "; referenced_urls | ";
 
-        if (this.links.isEmpty())
-            referencedUrls += "None; ";
+        if (this.links.isEmpty()) referencedUrls += "None; ";
 
         int linkCount = 0;
         for (String link : this.links)
         {
-            if (linkCount++ == Configuration.MAXIMUM_REFERENCE_LINKS)
+            if (linkCount == Configuration.MAX_REF_LINKS)
             {
                 referencedUrls += "; ";
                 break;
             }
-            // if its the last link, dont add a space
-            if (link == this.links.toArray()[this.links.size() - 1])
-                referencedUrls += link + "; ";
-            else
-                referencedUrls += link + " ";
+            if (link == this.links.toArray()[this.links.size() - 1]) referencedUrls += link + "; ";
+            else referencedUrls += link + " ";
+            linkCount++;
         }
 
-        if (this.words == null)
-            this.words = "None";
+        if (this.words == null) this.words = "None";
+
 
         this.words = this.words.replace(";", " ");
 
@@ -192,7 +192,7 @@ public class Downloader extends Thread {
 
         byte[] buffer = this.data.getBytes();
 
-        if (buffer.length > 65534) {
+        if (buffer.length > Configuration.MAX_PAGE_DATA) {
             System.err.println("Downloader[" + this.ID + "] [Page too long] " + "failed to send url to queue");
             socket.close();
             return;
@@ -205,16 +205,19 @@ public class Downloader extends Thread {
 
     private String getUrl() throws InterruptedException {
         String url = null;
-        while (url == null) {
-            try {
+        while (url == null)
+        {
+            try
+            {
                 Socket socket = new Socket("localhost", Configuration.PORT_A);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 url = in.readLine();
                 socket.close();
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 System.err.println(
                         "Downloader[" + this.ID + "] " + "failed to get url from queue, trying again in 3 seconds");
-                Thread.sleep(3000); // Wait 3 second before trying again
+                Thread.sleep(3000);
             }
         }
 
@@ -225,8 +228,10 @@ public class Downloader extends Thread {
 
         int numberTries = 0;
         boolean success = false;
-        while (!success) {
-            try {
+        while (!success)
+        {
+            try
+            {
                 Socket socket = new Socket("localhost", Configuration.PORT_B);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -243,8 +248,8 @@ public class Downloader extends Thread {
 
                 socket.close();
                 success = true;
-            } catch (Exception e) {
-                // If this fails, the url needs to be sent to the queue again
+            } catch (Exception e)
+            {
                 numberTries++;
                 System.err.println(
                         "Downloader[" + this.ID + "] [Attempts: " + numberTries + "] "
@@ -264,8 +269,6 @@ public class Downloader extends Thread {
                     + this.url;
 
             byte[] buffer = statusString.getBytes();
-
-            // System.out.println(statusString);
 
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group,
                     Configuration.MULTICAST_PORT);

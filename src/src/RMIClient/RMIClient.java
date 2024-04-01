@@ -65,7 +65,7 @@ public class RMIClient
                     break;
                 case 4:
                     System.out.println("--------------------------------------------------------------------------");
-                    System.out.println(gateway.getStringMenu());
+                    System.out.println(gateway.getAdminMenu());
                     regular_messages();
                     break;
                 case 5:
@@ -196,7 +196,7 @@ public class RMIClient
         RMIGatewayInterface gateway = null;
         while (!connected) {
             try {
-                gateway = (RMIGatewayInterface) Naming.lookup("rmi://"+ Configuration.gatewayIP+"/gateway");
+                gateway = (RMIGatewayInterface) Naming.lookup("rmi://"+ Configuration.IP_GATEWAY +"/gateway");
                 connected = true;
             } catch (Exception e) {
                 System.err.println("Error connecting to server, retrying in 3 seconds");

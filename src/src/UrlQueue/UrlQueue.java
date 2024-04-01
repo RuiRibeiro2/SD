@@ -16,31 +16,29 @@ public class UrlQueue {
     public UrlQueue() {
         queue = new LinkedList<String>();
         visited = new ArrayList<String>();
-        //queue.add("http://127.0.0.1:5500/Tests/Test_Site1.html");
-        //visited.add("http://127.0.0.1:5500/Tests/Test_Site1.html");
     }
 
-    public void addUrl(String url, boolean resend) {
-        if (!resend) {
-            if (visited.contains(url))
-                return;
-        }
+    public void addUrl(String url, boolean resend)
+    {
+        if (!resend)
+        {
+            if (visited.contains(url)) return;
 
+        }
         System.out.println("Added url: " + url);
         queue.add(url);
         visited.add(url);
     }
 
     public String getUrl() {
-        if (queue.isEmpty())
-            return null;
+        if (queue.isEmpty()) return null;
+
         return queue.poll();
     }
 
     public static void main(String[] args) throws UnknownHostException, IOException {
 
         UrlQueue urlQueue = new UrlQueue();
-
         QueueThread queueSend = new QueueThread(urlQueue, Configuration.PORT_A);
         QueueThread queueReceive = new QueueThread(urlQueue, Configuration.PORT_B);
         queueSend.start();

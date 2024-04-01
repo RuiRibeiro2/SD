@@ -28,42 +28,60 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
 
     private String separateWordsAlphabet(String frase) {
         String[] words = frase.split(" ");
-        String wordsA_M = "";
+        StringBuilder wordsA_M = new StringBuilder();
         for (String x : words) {
             if (x.toLowerCase().charAt(0) < 'm') {
-                wordsA_M += x + " ";
+                wordsA_M.append(x).append(" ");
             }
         }
-        return wordsA_M;
+        return wordsA_M.toString();
     }
 
     private String separateWordsAlphabet2(String frase)
     {
         String[] words = frase.split(" ");
-        String wordsN_Z = "";
+        StringBuilder wordsN_Z = new StringBuilder();
         for (String x : words) {
             if (x.toLowerCase().charAt(0) >= 'm') {
-                wordsN_Z += x + " ";
+                wordsN_Z.append(x).append(" ");
             }
         }
-        return wordsN_Z;
+        return wordsN_Z.toString();
     }
 
-    private int generateRandomNumber() {return (int) (Math.random() * Configuration.NUM_BARRELS) + 1;}
+    private int generateRandomEvenNumber()
+    {
+        int random = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
+        while (random % 2 == 1) {
+            random = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
+        }
+        return random;
+    }
+
+    private int generateRandomNumber(){ return (int) (Math.random() * Configuration.NUM_BARRELS) + 1;}
+    private int generateRandomOddNumber()
+    {
+        int random = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
+        while (random % 2 == 0) {
+            random = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
+        }
+        return random;
+    }
 
 
     @Override
-    public List<String> searchWords(String word)
-            throws NotBoundException, FileNotFoundException, IOException {
+    public List<String> searchWords(String word) throws IOException {
 
-        // Oo barrels pares contem informação sobre as palavras que começam pelas letras
-        // [a-m] e os impares [n-z]
-        // É necessário verificar em qual dos dois barrels a palavra se encontra ou se
-        // se encontra em ambos
+        // Barrels with even (pares) ID numbers store words from A to M
+        // Barrels with odd (impares) ID numbers store words from N to Z
+
+
         List<String> resultA_M = new ArrayList<String>();
         List<String> resultN_Z = new ArrayList<String>();
         String wordsA_M = "";
         String wordsN_Z = "";
+        long start;
+        long finish;
 
         try {
             wordsA_M = separateWordsAlphabet(word);
@@ -72,54 +90,77 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
             System.out.println("Error separating words alphabetically.");
         }
 
-        if (wordsA_M != "") {
-            int randomBarrel = generateRandomNumber();
+        int miss_counter = 0;
+
+
+        if (!wordsA_M.isEmpty())
+        {
+            int randomBarrel = generateRandomEvenNumber();
             boolean connected = false;
 
-            while (!connected) {
+            while (!connected)
+            {
+                if(miss_counter == 5)
+                {
+                    throw new RemoteException();
+                }
                 try
                 {
                     RMIBarrelInterface barrel = (RMIBarrelInterface) Naming
-                            .lookup("rmi://"+Configuration.barrelsIP+"/Barrel" + randomBarrel);
+                            .lookup("rmi://"+Configuration.IP_BARRELS +"/Barrel" + randomBarrel);
+                    start = System.currentTimeMillis();
                     resultA_M = barrel.searchWords(wordsA_M);
+                    finish = System.currentTimeMillis();
+                    adminPage.updateResponseTimesBarrel(randomBarrel,finish-start);
                     connected = true;
                 }
                 catch (Exception e)
                 {
                     // Communicate with Admin Page and notify that this barrel is Offline
-                    // adminPage.updateOfflineBarrels(randomBarrel);
-                    randomBarrel = generateRandomNumber();
+                    adminPage.updateOfflineBarrels(randomBarrel);
+                    miss_counter += 1;
+                    randomBarrel = generateRandomEvenNumber();
                 }
             }
         }
-
-        if (wordsN_Z != "") {
-            int randomBarrel = generateRandomNumber();
+        miss_counter = 0;
+        if (!wordsN_Z.isEmpty()) {
+            int randomBarrel = generateRandomOddNumber();
             boolean connected = false;
 
-            while (!connected) {
+            while (!connected)
+            {
+                if(miss_counter == 5)
+                {
+                    throw new RemoteException();
+                }
                 try
                 {
                     RMIBarrelInterface barrel = (RMIBarrelInterface) Naming
-                            .lookup("rmi://"+Configuration.barrelsIP+"/Barrel" + randomBarrel);
+                            .lookup("rmi://"+Configuration.IP_BARRELS +"/Barrel" + randomBarrel);
+                    start = System.currentTimeMillis();
                     resultN_Z = barrel.searchWords(wordsN_Z);
+                    finish = System.currentTimeMillis();
+                    adminPage.updateResponseTimesBarrel(randomBarrel,finish-start);
                     connected = true;
                 }
                 catch (Exception e)
                 {
                     // Communicate with Admin Page and notify that this barrel is Offline
-                    // adminPage.updateOfflineBarrels(randomBarrel);
-                    randomBarrel = generateRandomNumber();
+                    adminPage.updateOfflineBarrels(randomBarrel);
+                    miss_counter += 1;
+                    randomBarrel = generateRandomOddNumber();
                 }
             }
         }
-
         List<String> result = new ArrayList<String>();
-
-        if (wordsA_M == "") {
+        if (resultA_M.isEmpty()) {
             result = resultN_Z;
-        } else if (wordsN_Z == "") {
+            System.out.println(result);
+        } else if (resultN_Z.isEmpty()) {
             result = resultA_M;
+            System.out.println(result);
+
         } else {
             // Get the intersection of the two lists
             for (String s : resultA_M) {
@@ -128,7 +169,6 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
                 }
             }
         }
-
         if (this.searchDictionary.containsKey(word)) {
             this.searchDictionary.put(word, this.searchDictionary.get(word) + 1);
         } else {
@@ -164,21 +204,33 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     public List<String> searchLinks(String word) throws FileNotFoundException, IOException, NotBoundException
     {
         int randomBarrel = (int) (Math.random() * Configuration.NUM_BARRELS) + 1;
+        int miss_counter = 0;
         RMIBarrelInterface barrel = null;
         List<String> result = null;
         boolean connected = false;
+        long start,finish;
 
         while (!connected)
         {
+            if(miss_counter == 5)
+            {
+                throw new RemoteException();
+            }
+
             try
             {
-                barrel = (RMIBarrelInterface) Naming.lookup("rmi://"+Configuration.barrelsIP+"/Barrel" + randomBarrel);
+                barrel = (RMIBarrelInterface) Naming.lookup("rmi://"+Configuration.IP_BARRELS +"/Barrel" + randomBarrel);
+                start = System.currentTimeMillis();
                 result = barrel.searchLinks(word);
+                finish = System.currentTimeMillis();
+                adminPage.updateResponseTimesBarrel(randomBarrel,finish-start);
                 connected = true;
             }
             catch (Exception e)
             {
                 // Try again with another barrel
+                adminPage.updateOfflineBarrels(randomBarrel);
+                miss_counter += 1;
                 randomBarrel = generateRandomNumber();
             }
         }
@@ -193,9 +245,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         // via tcp
         Socket socket = new Socket("localhost", Configuration.PORT_B);
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
         out.println(url);
-
         out.close();
         socket.close();
     }
@@ -207,7 +257,6 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         RMIGateway gateway = new RMIGateway();
         LocateRegistry.createRegistry(1099);
         Naming.rebind("gateway", gateway);
-
 
         for (int i = 1; i <= Configuration.NUM_DOWNLOADERS; i++)
         {
@@ -224,7 +273,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     }
 
     @Override
-    public String getStringMenu() throws RemoteException {
+    public String getAdminMenu() throws RemoteException {
         return adminPage.getStringMenu();
     }
 

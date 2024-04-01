@@ -25,34 +25,47 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
 
     public RMIBarrel(int id) throws IOException, RemoteException
     {
-        this.INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel"+ id +".txt";
-        this.LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links"+ id +".txt";
-        this.id = id;
+        if(id < 1 || id > Configuration.NUM_BARRELS)
+        {
+            System.err.println("Invalid ID");
+            System.exit(0);
+        }
+        else this.id = id;
+
+        String txt;
+        File f1,f2;
+        boolean copyExists = false;
+
         this.indexMap = new HashMap<>();
         this.linksMap = new HashMap<>();
         this.auxMap = new HashMap<>();
         this.stats = "Offline";
 
-        File f = new File(INDEXFILE);
 
-        if (!f.exists()) f.createNewFile();
-
-
-        if (Configuration.COLD_START)
+        for(int i = 1; i <= Configuration.NUM_BARRELS; i++)
         {
-            f.delete();
-            f.createNewFile();
+            INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel" + i + ".txt";
+            LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links" + i + ".txt";
+            f1 = new File(INDEXFILE);
+            f2 = new File(LINKSFILE);
+
+            //Barrel with odd ID
+            if(  (  (id % 2 == 1 && i % 2 == 1) || (id % 2 == 0 && i % 2 == 0) ) && f1.exists() && f2.exists())
+            {
+                writeToHashMaps();
+                copyExists = true;
+                break;
+            }
         }
+        if(!copyExists)
+        {
+            INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel" + id + ".txt";
+            LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links" + id + ".txt";
+            f1 = new File(INDEXFILE);
+            f2 = new File(LINKSFILE);
 
-        f = new File(LINKSFILE);
-
-        if (!f.exists()) f.createNewFile();
-
-
-        if (Configuration.COLD_START) {
-            f.delete();
-            f.createNewFile();
-        } else {
+            f1.createNewFile();
+            f2.createNewFile();
             writeToHashMaps();
         }
 
@@ -63,8 +76,9 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
     public static void main(String[] args) throws IOException
     {
         RMIBarrel barrel = new RMIBarrel(Integer.parseInt(args[0]));
+        StatusThread statusWarning = new StatusThread(barrel);
+        statusWarning.start();
         barrel.startup();
-
     }
     public void startup()
     {
@@ -269,7 +283,8 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
             }
         }
 
-        if (!found) {
+        if (!found)
+        {
             int titleSize = data.get(1).split(" ").length;
             String[] words = data.get(2).split(";");
             String context = "";
@@ -294,7 +309,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                 writer.write(linha);
                 // System.out.println("Barrel[" + this.index + "] " + linha + " stored in
                 // barrel");
-                writer.write(System.getProperty("line.separator"));
+                writer.write(System.lineSeparator());
                 writer.close();
             } catch (IOException e) {
                 System.err.println("Erro ao ler o ficheiro dos links [2]");
@@ -312,25 +327,22 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
         reader.close();
 
-        // System.out.println("==================================");
-        // for (String info : data) {
-        // System.out.println("Field: " + info);
-        // }
-        // System.out.println("==================================");
 
         String[] firstElement = data.get(0).split("\\|"); // url|referencedUrl1|referencedUrl2|...
         String url = firstElement[0];
 
         String[] words = data.get(2).split(";");
 
-        for (String word : words) {
+        for (String word : words)
+        {
             boolean found = false;
 
             if (word == null || word.equals("")) {
                 continue;
             }
 
-            if (this.id % 2 == 0) {
+            if (this.id % 2 == 0)
+            {
                 if (word.toLowerCase().charAt(0) >= 'm')
                     continue;
             } else {
@@ -338,7 +350,8 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                     continue;
             }
 
-            for (String linha : lines) {
+            for (String linha : lines)
+            {
                 String[] parts = linha.split(";");
                 String wordInFile = parts[0].toLowerCase();
                 List<String> links = Arrays.asList(parts).subList(1, parts.length);
@@ -371,7 +384,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         // referencedUrl2,...]
 
         // Randomly throws RemoteException to simulate a crash
-        if (Configuration.AUTO_FAIL_BARRELS) {
+        if (Configuration.SABOTAGE_BARRELS) {
             int random = (int) (Math.random() * 2) + 1;
             if (random == 1) {
                 System.out.println("Barrel[" + this.id + "] simulated a crash while searching for words");
@@ -393,7 +406,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         return result;
     }
 
-    private void sendStatus(String status) throws IOException
+    public void sendStatus(String status) throws IOException
     {
 
         // Compare this.stats with status
@@ -423,7 +436,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
     {
 
         // Randomly throws RemoteException to simulate a crash
-        if (Configuration.AUTO_FAIL_BARRELS) {
+        if (Configuration.SABOTAGE_BARRELS) {
             int random = (int) (Math.random() * 2) + 1;
             if (random == 1) {
                 System.out.println("Barrel[" + this.id + "] simulated a crash while searching for words");

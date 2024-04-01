@@ -59,12 +59,18 @@ public class QueueThread extends Thread {
         socket.close();
     }
 
-    public void run() {
-        while (true) {
-            try {
-                if (port == Configuration.PORT_A) {
+    public void run()
+    {
+        while (true)
+        {
+            try
+            {
+                if (port == Configuration.PORT_A)
+                {
                     sendUrl();
-                } else if (port == Configuration.PORT_B) {
+                }
+                else if (port == Configuration.PORT_B)
+                {
                     receiveUrl();
                 }
             } catch (Exception e) {
