@@ -24,6 +24,8 @@ public class Configuration
 
     // Size of context in links
     public static final int MAX_PAGE_DATA = 65534;
+
+    public static final int NUM_MISSES = 10;
     public static final int CONTEXT_SIZE = 15;
     public static final int MAX_REF_LINKS = 10;
 

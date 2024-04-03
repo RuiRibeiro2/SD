@@ -17,9 +17,10 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
     private String INDEXFILE;
     private String LINKSFILE;
     private int id;
-    private HashMap<String, ArrayList<String>> indexMap; // <<word>, <url1, url2, ...>>
+    private HashMap<String, ArrayList<String>> indexMapA_M;
+    private HashMap<String, ArrayList<String>> indexMapN_Z; // <<word>, <url1, url2, ...>>
     private HashMap<String, ArrayList<String>> linksMap; // <<url>, <title, description, url1, url2, ...>>
-    private HashMap<String, Integer> auxMap;
+    private HashMap<String, Integer> relevanceMap;
 
     private String stats;
 
@@ -32,25 +33,16 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
         else this.id = id;
 
-        String txt;
         File f1,f2;
         boolean copyExists = false;
 
-        this.indexMap = new HashMap<>();
-        this.linksMap = new HashMap<>();
-        this.auxMap = new HashMap<>();
-        this.stats = "Offline";
-
-
         for(int i = 1; i <= Configuration.NUM_BARRELS; i++)
         {
-            INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel" + i + ".txt";
-            LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links" + i + ".txt";
+            this.INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel"+i+".txt";
+            this.LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links"+i+".txt";
             f1 = new File(INDEXFILE);
             f2 = new File(LINKSFILE);
-
-            //Barrel with odd ID
-            if(  (  (id % 2 == 1 && i % 2 == 1) || (id % 2 == 0 && i % 2 == 0) ) && f1.exists() && f2.exists())
+            if(f1.exists() && f2.exists())
             {
                 writeToHashMaps();
                 copyExists = true;
@@ -59,15 +51,19 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
         if(!copyExists)
         {
-            INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel" + id + ".txt";
-            LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links" + id + ".txt";
+            this.INDEXFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Barrel"+id+".txt";
+            this.LINKSFILE = "Googol\\src\\src\\Barrels\\SaveFiles\\Links"+id+".txt";
             f1 = new File(INDEXFILE);
             f2 = new File(LINKSFILE);
-
             f1.createNewFile();
             f2.createNewFile();
-            writeToHashMaps();
         }
+
+        this.indexMapA_M = new HashMap<>();
+        this.indexMapN_Z = new HashMap<>();
+        this.linksMap = new HashMap<>();
+        this.relevanceMap = new HashMap<>();
+        this.stats = "Offline";
 
         UnicastRemoteObject.exportObject(this, 0);
         Naming.rebind("rmi://localhost/Barrel" + id, this);
@@ -95,7 +91,8 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
 
     private void receive_multicast() throws IOException {
         MulticastSocket socket = null;
-        try {
+        try
+        {
             socket = new MulticastSocket(Configuration.MULTICAST_PORT);
             InetAddress group = InetAddress.getByName(Configuration.MULTICAST_ADDRESS);
             socket.joinGroup(group);
@@ -195,9 +192,10 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
 
     private void writeToHashMaps()
     {
-
-        synchronized (linksMap) {
-            try {
+        synchronized (linksMap)
+        {
+            try
+            {
                 BufferedReader reader = new BufferedReader(new FileReader(LINKSFILE));
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -227,18 +225,55 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
             }
         }
 
-        synchronized (indexMap) {
-            try {
+        synchronized (indexMapA_M)
+        {
+            try
+            {
                 BufferedReader reader = new BufferedReader(new FileReader(INDEXFILE));
                 String line;
-                while ((line = reader.readLine()) != null) {
+                while ((line = reader.readLine()) != null)
+                {
                     String[] parts = line.split(";");
                     String word = parts[0].toLowerCase();
                     ArrayList<String> urls = new ArrayList<>();
-                    for (int i = 1; i < parts.length; i++) {
+
+                    for(int i = 1; i < parts.length; i++)
+                    {
                         urls.add(parts[i]);
                     }
-                    indexMap.put(word, urls);
+
+                    if (word.charAt(0) <= 'm')
+                    {
+                        indexMapA_M.put(word, urls);
+                    }
+                }
+                reader.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        synchronized (indexMapN_Z)
+        {
+            try
+            {
+                BufferedReader reader = new BufferedReader(new FileReader(INDEXFILE));
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    String[] parts = line.split(";");
+                    String word = parts[0].toLowerCase();
+                    ArrayList<String> urls = new ArrayList<>();
+
+                    for(int i = 1; i < parts.length; i++)
+                    {
+                        urls.add(parts[i]);
+                    }
+
+                    if (word.charAt(0) > 'm')
+                    {
+                        indexMapN_Z.put(word, urls);
+                    }
                 }
                 reader.close();
             } catch (Exception e) {
@@ -247,133 +282,132 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
     }
 
-    private void writeToLinksFile(ArrayList<String> data) {
-
-        String[] firstElement = data.get(0).split("\\|"); // url|referencedUrl1|referencedUrl2|...
-        String url = firstElement[0];
-
-        List<String> lines = new ArrayList<String>();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(LINKSFILE));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-                if (line.split(";")[0].equals(url)) {
-                    reader.close();
-                    return;
-                }
-            }
-            reader.close();
-        } catch (IOException e) {
-            System.err.println("Error reading links file");
-        }
-
-        String otherUrls = "";
-        for (int i = 2; i < firstElement.length; i++) {
-            if (i != firstElement.length - 1)
-                otherUrls += firstElement[i] + "|";
-            else
-                otherUrls += firstElement[i];
-        }
-
-        boolean found = false;
-        for (String linha : lines) {
-            if (linha.equals(url)) {
-                found = true;
-            }
-        }
-
-        if (!found)
-        {
-            int titleSize = data.get(1).split(" ").length;
-            String[] words = data.get(2).split(";");
-            String context = "";
-            for (int i = 2 + titleSize; i < words.length && i < Configuration.CONTEXT_SIZE + 2 + titleSize; i++) {
-                context += words[i] + " ";
-            }
-
-            String linha;
-            if (!otherUrls.equals("")) {
-                linha = url + "|" + otherUrls + ";" + data.get(1) + ";" + context;
-            } else {
-                linha = url + ";" + data.get(1) + ";" + context;
-            }
-
-            if (context == null || context.equals("")) {
-                System.out.println("Barrel[" + this.id + "] [No description] failed to store in barrel");
-                return;
-            }
-
-            try {
-                FileWriter writer = new FileWriter(LINKSFILE, true);
-                writer.write(linha);
-                // System.out.println("Barrel[" + this.index + "] " + linha + " stored in
-                // barrel");
-                writer.write(System.lineSeparator());
-                writer.close();
-            } catch (IOException e) {
-                System.err.println("Erro ao ler o ficheiro dos links [2]");
-            }
-        }
-    }
-
-    private void writeToFile(ArrayList<String> data) throws IOException
+    private void writeToLinksFile(ArrayList<String> data)
     {
-        List<String> lines = new ArrayList<String>();
-        BufferedReader reader = new BufferedReader(new FileReader(INDEXFILE));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            lines.add(line);
-        }
-        reader.close();
-
-
         String[] firstElement = data.get(0).split("\\|"); // url|referencedUrl1|referencedUrl2|...
         String url = firstElement[0];
-
-        String[] words = data.get(2).split(";");
-
-        for (String word : words)
+        synchronized (LINKSFILE)
         {
-            boolean found = false;
-
-            if (word == null || word.equals("")) {
-                continue;
-            }
-
-            if (this.id % 2 == 0)
-            {
-                if (word.toLowerCase().charAt(0) >= 'm')
-                    continue;
-            } else {
-                if (word.toLowerCase().charAt(0) < 'm')
-                    continue;
-            }
-
-            for (String linha : lines)
-            {
-                String[] parts = linha.split(";");
-                String wordInFile = parts[0].toLowerCase();
-                List<String> links = Arrays.asList(parts).subList(1, parts.length);
-                if (wordInFile.equals(word.toLowerCase())) {
-                    if (!links.contains(url)) {
-                        lines.set(lines.indexOf(linha), linha + ";" + url);
+            List<String> lines = new ArrayList<String>();
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(LINKSFILE));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    lines.add(line);
+                    if (line.split(";")[0].equals(url)) {
+                        reader.close();
+                        return;
                     }
+                }
+                reader.close();
+            } catch (IOException e) {
+                System.err.println("Error reading links file");
+            }
+
+            String otherUrls = "";
+            for (int i = 2; i < firstElement.length; i++) {
+                if (i != firstElement.length - 1)
+                    otherUrls += firstElement[i] + "|";
+                else
+                    otherUrls += firstElement[i];
+            }
+
+            boolean found = false;
+            for (String linha : lines) {
+                if (linha.equals(url)) {
                     found = true;
                 }
             }
 
-            if (!found) {
-                lines.add(word + ";" + url);
+            if (!found)
+            {
+                int titleSize = data.get(1).split(" ").length;
+                String[] words = data.get(2).split(";");
+                String context = "";
+                for (int i = 2 + titleSize; i < words.length && i < Configuration.CONTEXT_SIZE + 2 + titleSize; i++) {
+                    context += words[i] + " ";
+                }
+
+                String linha;
+                if (!otherUrls.equals("")) {
+                    linha = url + "|" + otherUrls + ";" + data.get(1) + ";" + context;
+                } else {
+                    linha = url + ";" + data.get(1) + ";" + context;
+                }
+
+                if (context == null || context.equals("")) {
+                    System.out.println("Barrel[" + this.id + "] [No description] failed to store in barrel");
+                    return;
+                }
+
+                try {
+                    FileWriter writer = new FileWriter(LINKSFILE, true);
+                    writer.write(linha);
+                    // System.out.println("Barrel[" + this.index + "] " + linha + " stored in
+                    // barrel");
+                    writer.write(System.lineSeparator());
+                    writer.close();
+                } catch (IOException e) {
+                    System.err.println("Error reading links file");
+                }
             }
         }
 
-        FileWriter writer = new FileWriter(INDEXFILE);
-        for (String linha : lines) {
-            writer.write(linha);
-            writer.write(System.getProperty("line.separator"));
+
+    }
+
+    private void writeToFile(ArrayList<String> data) throws IOException
+    {
+        synchronized (INDEXFILE)
+        {
+            List<String> lines = new ArrayList<String>();
+            BufferedReader reader = new BufferedReader(new FileReader(INDEXFILE));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+            reader.close();
+
+
+            String[] firstElement = data.get(0).split("\\|"); // url|referencedUrl1|referencedUrl2|...
+            String url = firstElement[0];
+
+            String[] words = data.get(2).split(";");
+
+            for (String word : words)
+            {
+                boolean found = false;
+
+                if (word == null || word.isEmpty()) {
+                    continue;
+                }
+
+                for (String linha : lines)
+                {
+                    String[] parts = linha.split(";");
+                    String wordInFile = parts[0].toLowerCase();
+                    List<String> links = Arrays.asList(parts).subList(1, parts.length);
+                    if (wordInFile.equals(word.toLowerCase())) {
+                        if (!links.contains(url)) {
+                            lines.set(lines.indexOf(linha), linha + ";" + url);
+                        }
+                        found = true;
+                    }
+                }
+
+                if (!found) {
+                    lines.add(word + ";" + url);
+                }
+            }
+
+            FileWriter writer = new FileWriter(INDEXFILE);
+            for (String linha : lines) {
+                writer.write(linha);
+                writer.write(System.lineSeparator());
+            }
+            writer.close();
         }
-        writer.close();
+
     }
 
     // Find every link that points to a page
@@ -382,15 +416,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
     {
         // this.linksMap format: url -> [title, context, referencedUrl1,
         // referencedUrl2,...]
-
-        // Randomly throws RemoteException to simulate a crash
-        if (Configuration.SABOTAGE_BARRELS) {
-            int random = (int) (Math.random() * 2) + 1;
-            if (random == 1) {
-                System.out.println("Barrel[" + this.id + "] simulated a crash while searching for words");
-                throw new RemoteException();
-            }
-        }
+        
 
         List<String> result = new ArrayList<String>();
 
@@ -428,53 +454,63 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         System.out.println(statusString);
         socket.send(packet);
         socket.close();
-
     }
 
     @Override
     public List<String> searchWords(String word) throws FileNotFoundException, IOException
     {
-
-        // Randomly throws RemoteException to simulate a crash
-        if (Configuration.SABOTAGE_BARRELS) {
-            int random = (int) (Math.random() * 2) + 1;
-            if (random == 1) {
-                System.out.println("Barrel[" + this.id + "] simulated a crash while searching for words");
-                throw new RemoteException();
-            }
-        }
-
         String words[] = word.split(" ");
-        auxMap.clear();
+        relevanceMap.clear();
 
-        // Gets the links that each words
-        for (String x : words) {
-            x = x.toLowerCase();
-            if (indexMap.containsKey(x)) {
-                ArrayList<String> urls = indexMap.get(x);
-                for (String url : urls) {
-                    if (auxMap.containsKey(url)) {
-                        auxMap.put(url, auxMap.get(url) + 1);
-                    } else {
-                        auxMap.put(url, 1);
+        // Gets the links for each word
+        for (String target : words)
+        {
+            word = target.toLowerCase();
+            if (word.charAt(0) <= 'm' && indexMapA_M.containsKey(word))
+            {
+                ArrayList<String> urls = indexMapA_M.get(word);
+                for (String url : urls)
+                {
+                    if (relevanceMap.containsKey(url))
+                    {
+                        relevanceMap.put(url, relevanceMap.get(url) + 1);
+                    }
+                    else
+                    {
+                        relevanceMap.put(url, 1);
+                    }
+                }
+            }
+            else if(word.charAt(0) > 'm' && indexMapN_Z.containsKey(word))
+            {
+                ArrayList<String> urls = indexMapN_Z.get(word);
+                for (String url : urls)
+                {
+                    if (relevanceMap.containsKey(url))
+                    {
+                        relevanceMap.put(url, relevanceMap.get(url) + 1);
+                    }
+                    else
+                    {
+                        relevanceMap.put(url, 1);
                     }
                 }
             }
         }
 
         // Remove links from the map that don't have all the words
-        Iterator<String> iterator = auxMap.keySet().iterator();
+        Iterator<String> iterator = relevanceMap.keySet().iterator();
         while (iterator.hasNext()) {
             String key = iterator.next();
-            if (auxMap.get(key) != words.length) {
+            if (relevanceMap.get(key) != words.length) {
                 iterator.remove();
             }
         }
 
         // Create a list with the results
         ArrayList<String> results = new ArrayList<String>();
-        for (int i = 0; i < auxMap.size(); i++) {
-            String key = (String) auxMap.keySet().toArray()[i];
+        for (int i = 0; i < relevanceMap.size(); i++) {
+            String key = (String) relevanceMap.keySet().toArray()[i];
             ArrayList<String> info = linksMap.get(key);
             String result = key + ";" + info.get(0) + ";" + info.get(1);
             results.add(result);

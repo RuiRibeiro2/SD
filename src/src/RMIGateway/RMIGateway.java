@@ -17,13 +17,13 @@ import java.util.*;
 public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterface
 {
     private AdminPage adminPage;
-    private HashMap<String, Integer> searchDictionary;
+    private HashMap<String, Integer> relevanceDictionary;
 
     public RMIGateway() throws RemoteException
     {
         super();
-        this.searchDictionary = new HashMap<String, Integer>();
-        adminPage = new AdminPage(searchDictionary);
+        this.relevanceDictionary = new HashMap<>();
+        adminPage = new AdminPage(relevanceDictionary);
     }
 
     private String separateWordsAlphabet(String frase) {
@@ -95,12 +95,12 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
 
         if (!wordsA_M.isEmpty())
         {
-            int randomBarrel = generateRandomEvenNumber();
+            int randomBarrel = generateRandomNumber();
             boolean connected = false;
 
             while (!connected)
             {
-                if(miss_counter == 5)
+                if(miss_counter == Configuration.NUM_MISSES)
                 {
                     throw new RemoteException();
                 }
@@ -119,18 +119,18 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
                     // Communicate with Admin Page and notify that this barrel is Offline
                     adminPage.updateOfflineBarrels(randomBarrel);
                     miss_counter += 1;
-                    randomBarrel = generateRandomEvenNumber();
+                    randomBarrel = generateRandomNumber();
                 }
             }
         }
         miss_counter = 0;
         if (!wordsN_Z.isEmpty()) {
-            int randomBarrel = generateRandomOddNumber();
+            int randomBarrel = generateRandomNumber();
             boolean connected = false;
 
             while (!connected)
             {
-                if(miss_counter == 5)
+                if(miss_counter == Configuration.NUM_MISSES)
                 {
                     throw new RemoteException();
                 }
@@ -149,7 +149,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
                     // Communicate with Admin Page and notify that this barrel is Offline
                     adminPage.updateOfflineBarrels(randomBarrel);
                     miss_counter += 1;
-                    randomBarrel = generateRandomOddNumber();
+                    randomBarrel = generateRandomNumber();
                 }
             }
         }
@@ -169,10 +169,10 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
                 }
             }
         }
-        if (this.searchDictionary.containsKey(word)) {
-            this.searchDictionary.put(word, this.searchDictionary.get(word) + 1);
+        if (this.relevanceDictionary.containsKey(word)) {
+            this.relevanceDictionary.put(word, this.relevanceDictionary.get(word) + 1);
         } else {
-            this.searchDictionary.put(word, 1);
+            this.relevanceDictionary.put(word, 1);
         }
 
         sortSearchDictionary();
@@ -184,7 +184,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     {
         // Sort the search dictionary by the number of times a word has been searched
         List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(
-                this.searchDictionary.entrySet());
+                this.relevanceDictionary.entrySet());
 
         Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
             public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
@@ -196,7 +196,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
         for (Map.Entry<String, Integer> aa : list) {
             temp.put(aa.getKey(), aa.getValue());
         }
-        this.searchDictionary = temp;
+        this.relevanceDictionary = temp;
         adminPage.updateHashMap(temp);
     }
 
@@ -268,7 +268,7 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
             }
         }
 
-        gateway.adminPage = new AdminPage(gateway.searchDictionary);
+        gateway.adminPage = new AdminPage(gateway.relevanceDictionary);
         gateway.adminPage.showMenu();
     }
 

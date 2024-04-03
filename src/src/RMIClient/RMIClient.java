@@ -15,8 +15,6 @@ import java.util.Scanner;
 
 public class RMIClient
 {
-    private boolean login;
-
     private void run(RMIGatewayInterface gateway) throws Exception {
         printMenu();
 
@@ -60,7 +58,7 @@ public class RMIClient
                     break;
                 case 3:
                     System.out.println("--------------------------------------------------------------------------");
-                    checkLogin(gateway, scanner, 3);
+                    searchLink(gateway, scanner);
                     regular_messages();
                     break;
                 case 4:
@@ -103,7 +101,7 @@ public class RMIClient
         return true;
     }
 
-    private void searchWord(RMIGatewayInterface searchModule, Scanner scanner)
+    private void searchWord(RMIGatewayInterface gateway, Scanner scanner)
             throws RemoteException, MalformedURLException, NotBoundException, FileNotFoundException, IOException {
 
         System.out.print("Type in terms for search: ");
@@ -118,7 +116,7 @@ public class RMIClient
         }
 
         int pageNumber = 1;
-        List<String> resultList = searchModule.searchWords(words);
+        List<String> resultList = gateway.searchWords(words);
 
         int i = 0;
         while (true)
@@ -171,13 +169,13 @@ public class RMIClient
         }
     }
 
-    private void checkLogin(RMIGatewayInterface searchModule, Scanner scanner, int command)
+    private void searchLink(RMIGatewayInterface gateway, Scanner scanner)
             throws FileNotFoundException, IOException, NotBoundException {
 
         System.out.print("Insert hyperlink to webpage: ");
         scanner.nextLine();
         String url = scanner.nextLine();
-        List<String> links = (searchModule.searchLinks(url));
+        List<String> links = (gateway.searchLinks(url));
 
         if (links.isEmpty()) {
             System.out.println("No results found");
@@ -194,22 +192,26 @@ public class RMIClient
     {
         boolean connected = false;
         RMIGatewayInterface gateway = null;
-        while (!connected) {
-            try {
+        while (!connected)
+        {
+            try
+            {
                 gateway = (RMIGatewayInterface) Naming.lookup("rmi://"+ Configuration.IP_GATEWAY +"/gateway");
                 connected = true;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 System.err.println("Error connecting to server, retrying in 3 seconds");
                 Thread.sleep(3000);
             }
         }
 
         RMIClient client = new RMIClient();
-        client.login = false;
-
-        try {
+        try
+        {
             client.run(gateway);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error connecting to server, retrying in 3 seconds");
             Thread.sleep(3000);
             main(args);

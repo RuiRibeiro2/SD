@@ -47,7 +47,6 @@ public class AdminPage
                 socket.receive(packet);
 
                 String msg = new String(packet.getData(), 0, packet.getLength());
-                //System.out.println(msg);
                 updateStatus(msg);
 
                 stringMenu = generatePanelString();
@@ -82,6 +81,7 @@ public class AdminPage
             try
             {
                 this.barrels.set(index - 1, status + " - " + ip + " - " + port);
+
             }
             catch (IndexOutOfBoundsException e)
             {
