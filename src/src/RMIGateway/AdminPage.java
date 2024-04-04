@@ -9,26 +9,31 @@ import java.util.HashMap;
 
 public class AdminPage
 {
-    private ArrayList<String> downloaders;
-    private ArrayList<String> barrels;
+    private ArrayList<String> downloadersStatus;
+    private ArrayList<String> barrelsStatus;
+    private ArrayList<String> barrelsIPs;
     private HashMap<String, Integer> relevanceDictionary;
-
     private HashMap<Integer,ArrayList<Long>> avgTimesBarrels;
 
     private String stringMenu;
 
     public AdminPage(HashMap<String, Integer> relevanceDictionary) {
-        this.downloaders = new ArrayList<String>();
-        this.barrels = new ArrayList<String>();
+        this.downloadersStatus = new ArrayList<String>();
+        this.barrelsStatus = new ArrayList<String>();
+        this.barrelsIPs = new ArrayList<>();
         this.avgTimesBarrels = new HashMap<>();
         this.relevanceDictionary = relevanceDictionary;
     }
 
     public void showMenu() {
         initializeDataStructures();
-        stringMenu = generatePanelString();
+        stringMenu = printAdminPage();
         getActiveDownloadersAndBarrels();
 
+    }
+    public String getBarrelIP(int id)
+    {
+        return this.barrelsIPs.get(id-1);
     }
 
     private void getActiveDownloadersAndBarrels()
@@ -49,7 +54,7 @@ public class AdminPage
                 String msg = new String(packet.getData(), 0, packet.getLength());
                 updateStatus(msg);
 
-                stringMenu = generatePanelString();
+                stringMenu = printAdminPage();
             }
 
         } catch (IOException e) {
@@ -70,18 +75,18 @@ public class AdminPage
             int index = Integer.parseInt(msg_split[1].split("\\|")[1].trim());
             String status = msg_split[2].split("\\|")[1].trim();
             String url = msg_split[3].split("\\|")[1].trim();
-            this.downloaders.set(index - 1, status + " - " + url);
+            this.downloadersStatus.set(index - 1, status + " - " + url);
         }
         else if (msg_split[0].split("\\|")[1].trim().equals("Barrel"))
         {
             int index = Integer.parseInt(msg_split[1].split("\\|")[1].trim());
             String status = msg_split[2].split("\\|")[1].trim();
             String ip = msg_split[3].split("\\|")[1].trim();
-            String port = msg_split[4].split("\\|")[1].trim();
+            this.barrelsIPs.set(index-1,ip);
             try
             {
-                this.barrels.set(index - 1, status + " - " + ip + " - " + port);
-
+                this.barrelsStatus.set(index - 1, status + " - " + ip);
+                System.out.println(this.barrelsStatus.get(index-1));
             }
             catch (IndexOutOfBoundsException e)
             {
@@ -96,10 +101,11 @@ public class AdminPage
         try
         {
             //System.out.println("Barrel "+id+": "+this.barrels.get(id-1));
-            if(!this.barrels.get(id-1).equals("Offline"))
+            if(!this.barrelsStatus.get(id-1).equals("Offline"))
             {
-                this.barrels.set(id-1,"Offline");
-                stringMenu = generatePanelString();
+                this.barrelsStatus.set(id-1,"Offline");
+                this.barrelsIPs.set(id-1,"Null");
+                stringMenu = printAdminPage();
             }
 
         }
@@ -116,7 +122,7 @@ public class AdminPage
             ArrayList<Long> times = this.avgTimesBarrels.get(id);
             times.add(time);
             this.avgTimesBarrels.replace(id,times);
-            stringMenu = generatePanelString();
+            stringMenu = printAdminPage();
         }
         catch (IndexOutOfBoundsException e)
         {
@@ -139,13 +145,13 @@ public class AdminPage
     }
 
 
-    private String generatePanelString()
+    private String printAdminPage()
     {
         StringBuilder sb = new StringBuilder();
         sb.append("------- Downloaders -------\n");
         for (int i = 0; i < Configuration.NUM_DOWNLOADERS; i++) {
             int aux = i + 1;
-            sb.append("Downloader[" + aux + "] " + this.downloaders.get(i) + "\n");
+            sb.append("Downloader[" + aux + "] " + this.downloadersStatus.get(i) + "\n");
         }
 
         sb.append("\n------- Barrels -------\n");
@@ -154,7 +160,7 @@ public class AdminPage
             int aux = i + 1;
             ArrayList<Long> times = this.avgTimesBarrels.get(aux);
             float avg = getAvgResponseTime(times);
-            sb.append("Barrel[" + aux + "] " + this.barrels.get(i) + "\n------Average Response Time : " + avg + " ms\n");
+            sb.append("Barrel[" + aux + "] " + this.barrelsStatus.get(i) + "\n------Average Response Time : " + avg + " ms\n");
         }
 
         sb.append("\n------- Most Frequent Searches -------\n");
@@ -176,11 +182,12 @@ public class AdminPage
 
     private void initializeDataStructures() {
         for (int i = 0; i < Configuration.NUM_DOWNLOADERS; i++) {
-            this.downloaders.add("Waiting");
+            this.downloadersStatus.add("Waiting");
         }
         for (int i = 0; i < Configuration.NUM_BARRELS; i++)
         {
-            this.barrels.add("Offline");
+            this.barrelsStatus.add("Offline");
+            this.barrelsIPs.add("Null");
             ArrayList<Long> times = new ArrayList<>();
             times.add(0L);
             this.avgTimesBarrels.put(i+1,times);
@@ -190,7 +197,7 @@ public class AdminPage
     public void updateHashMap(HashMap<String, Integer> dic)
     {
         this.relevanceDictionary = dic;
-        stringMenu = generatePanelString();
+        stringMenu = printAdminPage();
     }
 
 

@@ -5,10 +5,8 @@ import src.RMIInterface.RMIGatewayInterface;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -102,7 +100,7 @@ public class RMIClient
     }
 
     private void searchWord(RMIGatewayInterface gateway, Scanner scanner)
-            throws RemoteException, MalformedURLException, NotBoundException, FileNotFoundException, IOException {
+            throws  NotBoundException,IOException {
 
         System.out.print("Type in terms for search: ");
         scanner.nextLine();
@@ -147,7 +145,6 @@ public class RMIClient
                 i++;
             }
 
-            // If i not multiple of
             if (!info || i % 10 != 0)
             {
                 System.out.println("No more results");

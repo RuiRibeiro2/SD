@@ -15,7 +15,7 @@ public class QueueThread extends Thread {
     private UrlQueue urlQueue;
 
     public QueueThread(UrlQueue urlQueue, int port) throws IOException {
-        if (port != Configuration.PORT_A && port != Configuration.PORT_B)
+        if (port != Configuration.SEND_PORT && port != Configuration.RECEIVE_PORT)
             throw new IllegalArgumentException("Invalid port number");
 
         this.port = port;
@@ -39,19 +39,23 @@ public class QueueThread extends Thread {
         }
     }
 
-    private void receiveUrl() throws IOException {
+    private void receiveUrl() throws IOException
+    {
         Socket socket = serverSocket.accept();
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         String url;
         boolean resend = false;
-        while ((url = in.readLine()) != null) {
-            if (url.startsWith("[RESEND]")) {
+        while ((url = in.readLine()) != null)
+        {
+            if (url.startsWith("[RESEND]"))
+            {
                 url = url.substring(8);
                 System.out.println("[RE-ADDED]: " + url);
                 resend = true;
             }
-            synchronized (urlQueue) {
+            synchronized (urlQueue)
+            {
                 urlQueue.addUrl(url, resend);
             }
         }
@@ -65,11 +69,11 @@ public class QueueThread extends Thread {
         {
             try
             {
-                if (port == Configuration.PORT_A)
+                if (port == Configuration.SEND_PORT)
                 {
                     sendUrl();
                 }
-                else if (port == Configuration.PORT_B)
+                else if (port == Configuration.RECEIVE_PORT)
                 {
                     receiveUrl();
                 }

@@ -209,7 +209,7 @@ public class Downloader extends Thread {
         {
             try
             {
-                Socket socket = new Socket("localhost", Configuration.PORT_A);
+                Socket socket = new Socket("localhost", Configuration.SEND_PORT);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 url = in.readLine();
                 socket.close();
@@ -232,7 +232,7 @@ public class Downloader extends Thread {
         {
             try
             {
-                Socket socket = new Socket("localhost", Configuration.PORT_B);
+                Socket socket = new Socket("localhost", Configuration.RECEIVE_PORT);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
                 if (resend) {

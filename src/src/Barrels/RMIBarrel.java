@@ -21,10 +21,10 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
     private HashMap<String, ArrayList<String>> indexMapN_Z; // <<word>, <url1, url2, ...>>
     private HashMap<String, ArrayList<String>> linksMap; // <<url>, <title, description, url1, url2, ...>>
     private HashMap<String, Integer> relevanceMap;
-
+    private String ip;
     private String stats;
 
-    public RMIBarrel(int id) throws IOException, RemoteException
+    public RMIBarrel(int id, String ip) throws IOException, RemoteException
     {
         if(id < 1 || id > Configuration.NUM_BARRELS)
         {
@@ -32,6 +32,12 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
             System.exit(0);
         }
         else this.id = id;
+        this.ip = ip;
+        this.indexMapA_M = new HashMap<>();
+        this.indexMapN_Z = new HashMap<>();
+        this.linksMap = new HashMap<>();
+        this.relevanceMap = new HashMap<>();
+        this.stats = "Offline";
 
         File f1,f2;
         boolean copyExists = false;
@@ -44,7 +50,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
             f2 = new File(LINKSFILE);
             if(f1.exists() && f2.exists())
             {
-                writeToHashMaps();
+                updateHashMaps();
                 copyExists = true;
                 break;
             }
@@ -57,21 +63,17 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
             f2 = new File(LINKSFILE);
             f1.createNewFile();
             f2.createNewFile();
+            updateHashMaps();
         }
-
-        this.indexMapA_M = new HashMap<>();
-        this.indexMapN_Z = new HashMap<>();
-        this.linksMap = new HashMap<>();
-        this.relevanceMap = new HashMap<>();
-        this.stats = "Offline";
-
         UnicastRemoteObject.exportObject(this, 0);
         Naming.rebind("rmi://localhost/Barrel" + id, this);
     }
 
     public static void main(String[] args) throws IOException
     {
-        RMIBarrel barrel = new RMIBarrel(Integer.parseInt(args[0]));
+        int id = Integer.parseInt(args[0]);
+        String ip = InetAddress.getLocalHost().toString().split("/")[1];
+        RMIBarrel barrel = new RMIBarrel(id, ip);
         StatusThread statusWarning = new StatusThread(barrel);
         statusWarning.start();
         barrel.startup();
@@ -81,7 +83,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         try
         {
             sendStatus("Waiting");
-            receive_multicast();
+            multicastReceiver();
         }
         catch (Exception e)
         {
@@ -89,7 +91,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
     }
 
-    private void receive_multicast() throws IOException {
+    private void multicastReceiver() throws IOException {
         MulticastSocket socket = null;
         try
         {
@@ -106,13 +108,11 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                 sendStatus("Active");
                 String received = new String(packet.getData(), 0, packet.getLength());
 
-                ArrayList<String> data;
-                data = textParser(received);
+                ArrayList<String> data = extractDataFromMulticast(received);
                 if (data == null) continue;
-
-                writeToFile(data);
+                writeToIndexesFile(data);
                 writeToLinksFile(data);
-                writeToHashMaps();
+                updateHashMaps();
                 sendStatus("Waiting");
             }
 
@@ -124,7 +124,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         }
     }
 
-    private ArrayList<String> textParser(String received) {
+    private ArrayList<String> extractDataFromMulticast(String received) {
 
         // Protocol :
         // type | url; item_count | number; url | www.example.com; referenced_urls |
@@ -182,15 +182,10 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
 
         data.add(wordsSeparatedBySemicolon);
 
-        // Print data
-        // System.out.println("Barrel[" + this.index + "] [url] " + data.get(0));
-        // System.out.println("Barrel[" + this.index + "] [title] " + data.get(1));
-        // System.out.println("Barrel[" + this.index + "] [words] " + data.get(2));
-
         return data;
     }
 
-    private void writeToHashMaps()
+    private void updateHashMaps()
     {
         synchronized (linksMap)
         {
@@ -329,13 +324,13 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                 }
 
                 String linha;
-                if (!otherUrls.equals("")) {
+                if (!otherUrls.isEmpty()) {
                     linha = url + "|" + otherUrls + ";" + data.get(1) + ";" + context;
                 } else {
                     linha = url + ";" + data.get(1) + ";" + context;
                 }
 
-                if (context == null || context.equals("")) {
+                if (context == null || context.isEmpty()) {
                     System.out.println("Barrel[" + this.id + "] [No description] failed to store in barrel");
                     return;
                 }
@@ -343,12 +338,10 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                 try {
                     FileWriter writer = new FileWriter(LINKSFILE, true);
                     writer.write(linha);
-                    // System.out.println("Barrel[" + this.index + "] " + linha + " stored in
-                    // barrel");
                     writer.write(System.lineSeparator());
                     writer.close();
                 } catch (IOException e) {
-                    System.err.println("Error reading links file");
+                    System.err.println("Error writing to links file");
                 }
             }
         }
@@ -356,7 +349,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
 
     }
 
-    private void writeToFile(ArrayList<String> data) throws IOException
+    private void writeToIndexesFile(ArrayList<String> data) throws IOException
     {
         synchronized (INDEXFILE)
         {
@@ -381,7 +374,8 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                 if (word == null || word.isEmpty()) {
                     continue;
                 }
-
+                // If a given word already exists in the file, then it is updated with new urls
+                // If not, simply add the word to file
                 for (String linha : lines)
                 {
                     String[] parts = linha.split(";");
@@ -414,12 +408,8 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
     @Override
     public List<String> searchLinks(String word) throws FileNotFoundException, IOException
     {
-        // this.linksMap format: url -> [title, context, referencedUrl1,
-        // referencedUrl2,...]
-        
 
         List<String> result = new ArrayList<String>();
-
         for (String url : this.linksMap.keySet()) {
             ArrayList<String> info = this.linksMap.get(url);
             for (int i = 2; i < info.size(); i++) {
@@ -446,7 +436,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         MulticastSocket socket = new MulticastSocket(Configuration.MULTICAST_PORT);
 
         String statusString = "type | Barrel; index | " + this.id + "; status | " + status + "; ip | "
-                + Configuration.MULTICAST_ADDRESS + "; port | " + Configuration.MULTICAST_PORT + ";";
+                + this.ip + ";";
 
         byte[] buffer = statusString.getBytes();
 
@@ -466,6 +456,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
         for (String target : words)
         {
             word = target.toLowerCase();
+            // Search for word that starts with A-M
             if (word.charAt(0) <= 'm' && indexMapA_M.containsKey(word))
             {
                 ArrayList<String> urls = indexMapA_M.get(word);
@@ -481,6 +472,7 @@ public class RMIBarrel implements RMIBarrelInterface, Serializable
                     }
                 }
             }
+            // Search for word that starts with N-Z
             else if(word.charAt(0) > 'm' && indexMapN_Z.containsKey(word))
             {
                 ArrayList<String> urls = indexMapN_Z.get(word);

@@ -39,8 +39,8 @@ public class UrlQueue {
     public static void main(String[] args) throws UnknownHostException, IOException {
 
         UrlQueue urlQueue = new UrlQueue();
-        QueueThread queueSend = new QueueThread(urlQueue, Configuration.PORT_A);
-        QueueThread queueReceive = new QueueThread(urlQueue, Configuration.PORT_B);
+        QueueThread queueSend = new QueueThread(urlQueue, Configuration.SEND_PORT);
+        QueueThread queueReceive = new QueueThread(urlQueue, Configuration.RECEIVE_PORT);
         queueSend.start();
         queueReceive.start();
     }
