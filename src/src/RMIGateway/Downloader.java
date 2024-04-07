@@ -44,7 +44,8 @@ public class Downloader extends Thread {
                 this.url = getUrl();
             } catch (InterruptedException e)
             {
-                System.err.println("Downloader[" + this.ID + "] [ON WHILE TRUE] failed to get url from queue");
+                System.err.printf("Downloader[%d] [ON WHILE TRUE] failed to get URL from queue", this.ID);
+
             }
             if (this.url == null)
             {
@@ -60,8 +61,8 @@ public class Downloader extends Thread {
                 // Invalid url
             } catch (ConnectException e)
             {
-                System.out.println(
-                        "Downloader[" + this.ID + "] [Connection failed] failed to connect to url: " + this.url);
+                System.out.printf("Downloader[%d] [Connection failed] failed to connect to url: %s%n", this.ID, this.url);
+
                 try
                 {
                     this.links.clear();
@@ -69,12 +70,12 @@ public class Downloader extends Thread {
                     sendLinkToQueue(true);
                 } catch (Exception e1)
                 {
-                    System.err.println("Downloader[" + this.ID + "] failed to send url to queue");
+                    System.err.printf("Failed to enqueue URL in the downloader[%d]", this.ID);
                 }
                 continue;
             } catch (Exception e)
             {
-                System.err.println("Downloader[" + this.ID + "] [Not valid] failed to download url: " + this.url);
+                System.err.printf("Failed to download the URL[%s] in the downloader[%d]", this.url, this.ID);
                 continue;
             }
 
@@ -85,7 +86,7 @@ public class Downloader extends Thread {
                     int random = (int) (Math.random() * 5) + 1;
                     if (this.ID == random)
                     {
-                        System.out.println("Downloader[" + this.ID + "] Simulated a crash");
+                        System.out.printf("Simulated a crash in downloader with ID: [%d]", this.ID);
                         throw new Exception();
                     }
                 }
@@ -94,7 +95,7 @@ public class Downloader extends Thread {
                 {
 
                     // URL without title is invalid
-                    System.err.println("Downloader[" + this.ID + "] [No title] failed to download url: " + this.url);
+                    System.out.printf("Downloader[%d] [No title] failed to download url: %s%n", this.ID, this.url);
                     continue;
                 }
                 sendWords();
@@ -102,7 +103,7 @@ public class Downloader extends Thread {
 
             } catch (Exception e)
             {
-                System.err.println("Downloader[" + this.ID + "] stopped working!");
+                System.out.printf("The downloader with ID: [%d] has stopped working!%n", this.ID);
 
                 // Resend current link to queue
                 try {
@@ -110,13 +111,13 @@ public class Downloader extends Thread {
                     this.links.add(this.url);
                     sendLinkToQueue(true);
                 } catch (Exception e1) {
-                    System.err.println("Downloader[" + this.ID + "] failed to send url to queue");
+                    System.out.printf("Failed to send URL to the queue by downloader with ID: [%d]%n", this.ID);
                 }
                 try {
                     sendStatus("Offline");
                     return;
                 } catch (Exception e1) {
-                    System.err.println("Failed to send Downloader[" + this.ID + "] status");
+                    System.out.printf("Failed to send status of Downloader[%d]%n", this.ID);
                 }
             }
         }

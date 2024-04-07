@@ -6,7 +6,7 @@ public class Configuration
     public static boolean SABOTAGE_DOWNLOADERS = false;
 
     // IP addresses for RMI connections
-    public static String IP_GATEWAY = "localhost";
+    public static String IP_GATEWAY = "10.16.0.87";
 
     // TCP ports
     public static final int SEND_PORT = 8080;
