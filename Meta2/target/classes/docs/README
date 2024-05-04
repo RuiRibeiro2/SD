@@ -1,0 +1,48 @@
+### Googol Search Engine
+### Authors:
+### Marco Lucas 2021219146
+### Rui Ribeiro 2021189478
+### João Lopes 2020236190
+
+
+### Modules
+### They are stored in "lib" folder
+### To run the program, the following modules must be added as project dependencies:
+### jsoup-1.17.2.jar
+### jsoup-1.17.2-javadoc.jar
+### jsoup-1.17.2-sources.jar
+
+
+### For the sake of running the application without triggering warnings, the programs must be run in the following order:
+### 1 - UrlQueue
+### 2 - RMIGateway
+### 3 - RMIBarrel (at least one)
+### 4 - RMIClient
+
+### VSCode:
+### Go to "Run and Debug" tab on left bar and select the project's folder.
+### Create a "launch.json" file, from which build configurations can be set for all components
+### (Mandatory): RMIBarrel.java must have an integer as "args".
+
+### RMIBarrel.java
+### This component runs with a single argument, working as the barrel's id throughout the application
+### Before runtime, set args[0] as an integer; the application will warn if it's an invalid id.
+
+### Configuration.java
+### All settings related to the workings behind the application (which involve RMIBarrel, Downloader, RMIClient and RMIGateway)
+### are defined and accessed through this class.
+### (Important)
+### The gateway's IP address must be specified in this class. From the client's side, if the client runs in the same machine as the gateway, set it to "localhost".
+### If not, then set it to the IP address of the machine that will be running the gateway (it must be in the same private network).
+
+
+
+
+
+
+
+
+
+
+
+
