@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Page</title>
+
+  <style>
+    * {
+      margin: 0 auto;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: raleway, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: bold;
+      color: #fff;
+      font-size: 40px;
+      margin-bottom: 30px;
+    }
+
+    body {
+      display: flex;
+      background-color: #124e66;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    #menu-h {
+      background-color: #124e66;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 30px;
+      height: 100%;
+    }
+
+    #menu-h ul {
+      max-width: 1000px;
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #menu-h ul li {
+      display: vertical;
+    }
+
+    #menu-h ul li a {
+      color: #FFF;
+      padding: 20px;
+      display: inline-block;
+      border: 2px solid black;
+      border-radius: 20px;
+      text-decoration: none;
+      transition: background .4s;
+    }
+
+    #menu-h ul li a:hover {
+      background-color: #CD3700;
+    }
+
+    .animated-word {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .letter {
+      transition: 0.4s;
+      transform: translateX(0);
+      cursor: grab;
+      color: #fff;
+    }
+
+    .letter:hover {
+      transform: translatey(-1rem);
+      background: -webkit-linear-gradient(120deg, hsl(19, 90%, 52%), hsl(56, 100%, 50%));
+      background-clip: border-box;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .LogReg {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 30px;
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin-right: 30px;
+    }
+
+    .username {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 30px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin-left: 30px;
+    }
+
+    .login-button,
+    .register-button {
+      color: #FFF;
+      padding: 10px 20px;
+      display: inline-block;
+      text-decoration: none;
+      transition: background .4s;
+      background-color: hsl(19, 90%, 52%);
+      margin-left: 10px;
+    }
+
+    .login-button:hover,
+    .register-button:hover {
+      background-color: hsl(19, 70%, 42%);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>
+    <div class="animated-word">
+      <div class="letter">G</div>
+      <div class="letter">o</div>
+      <div class="letter">o</div>
+      <div class="letter">g</div>
+      <div class="letter">o</div>
+      <div class="letter">l</div>
+    </div>
+  </h1>
+
+  <nav id="menu-h">
+    <ul>
+      <li><a href="/search">Search</a></li>
+      <li><a href="/indexNewUrl">Index New Url</a></li>
+      <li><a href="/listPages">List Pages</a></li>
+      <li><a href="/admin">AdminPage</a></li>
+      <li><a href="/IndexHackersNews">Index Hackers News</a></li>
+      <li><a href="/IndexHackersByUsername">Index Hackers By Username</a></li>
+      <li><a href="/OpenAI">Ask ChatGPT</a></li>
+      <li th:if="${hackerNewsBoolean}" style="background-color: #F35C16;">
+        <a style="color:#FFF" href="/">The top stories of
+          Hacker News have been
+          indexed</a>
+      </li>
+    </ul>
+
+  </nav>
+  <div class="LogReg">
+    <a th:unless="${userLogged}" href="/login" class="login-button">Login</a>
+    <a th:unless="${userLogged}" href="/register" class="register-button">Register</a>
+    <span th:if="${userLogged}" style="font-size: 14px; color: #478dcb; margin-right: 10px;">Logged in as <span
+        th:text="${username}"></span></span>
+    <a th:if="${userLogged}" href="/logout" class="register-button">Logout</a>
+  </div>
+
+
+</body>
+
+</html>

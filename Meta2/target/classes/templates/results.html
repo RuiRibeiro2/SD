@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>GOOGOL</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        p {
+            color: #fff;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        h1 {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-weight: bold;
+            color: #fff;
+            font-size: 40px;
+            margin: 0;
+        }
+
+        html,
+        body {
+            font-family: raleway, sans-serif;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .results {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        body {
+            display: flex;
+            background-color: #124e66;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+
+        .search {
+            margin-left: 10px;
+        }
+
+        .src-box {
+            font-size: 20px;
+            border: solid .25em #fff;
+            display: inline-block;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border-radius: 2.5em;
+            margin-left: auto;
+        }
+
+        .src-box input[type=text] {
+            font-family: inherit;
+            font-weight: bold;
+            color: #fff;
+            width: 2.5em;
+            height: 2.5em;
+            background-color: transparent;
+            border: none;
+            box-sizing: border-box;
+            border-radius: 2.5em;
+            transition: width 800ms cubic-bezier(.68, -.55, .27, 1.55) 150ms;
+        }
+
+        .src-box input[type=text]:focus {
+            outline: none;
+        }
+
+        .src-box input[type=text]:focus,
+        .src-box input[type=text]:not(:placeholder-shown) {
+            width: 18em;
+            transition: width 800ms cubic-bezier(.68, -.55, .27, 1.55);
+        }
+
+        .src-box input[type=text]:focus+button[type=reset],
+        .src-box input[type=text]:not(:placeholder-shown)+button[type=reset] {
+            transform: rotate(-45deg) translateY(0);
+            transition: transform 150ms ease-out 800ms;
+        }
+
+        .src-box input[type=text]:focus+button[type=reset]::after,
+        .src-box input[type=text]:not(:placeholder-shown)+button[type=reset]::after {
+            opacity: 1;
+            transition: top 150ms ease-out 950ms, right 150ms ease-out 950ms, opacity 150ms
+            ease-out 950ms;
+        }
+        .src-box button[type=reset] {
+            background-color: transparent;
+            width: 1.4em;
+            height: 1.4em;
+            border: 0;
+            padding: 0;
+            outline: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: .55em;
+            right: .55em;
+            transform: rotate(-45deg) translateY(2.2em);
+            transition: transform 150ms ease-out 150ms;
+        }
+
+        .src-box button[type=reset]::before,
+        .src-box button[type=reset]::after {
+            content: "";
+            background-color: #fff;
+            width: .3em;
+            height: 1.4em;
+            border-radius: 10px;
+            position: absolute;
+        }
+
+        .src-box button[type=reset]::after {
+            transform: rotate(90deg);
+            opacity: 0;
+            transition: transform 150ms ease-out, opacity 150ms ease-out;
+        }
+
+        .animated-word {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            size: 100px;
+        }
+
+        .letter {
+            transition: 0.4s;
+            transform: translateX(0);
+            cursor: grab;
+            color: #fff;
+        }
+
+        .letter:hover {
+            transform: translatey(-1rem);
+            background: -webkit-linear-gradient(120deg, hsl(19, 90%, 52%), hsl(56, 100%, 50%));
+            background-clip: border-box;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+</style>
+</head>
+<body>
+    <h1>
+        <div class="animated-word">
+            <div class="letter" onclick="redirectToSearch()">G</div>
+        </div>
+    </h1>
+    <div class="src-box">
+        <input class="search" type="text" placeholder="  ">
+        <button type="reset"></button>
+    </div>
+
+    <script>
+        function redirectToSearch() {
+            window.location.href = 'http://localhost:8080/search';
+        }
+
+        document.querySelector('.src-box input[type=text]').addEventListener('keyup', function (e) {
+            if (e.keyCode == 13) {
+                result = document.querySelector('.src-box input[type=text]').value;
+                window.location.href = 'http://localhost:8080/results?query=' + result;
+            }
+        });
+    </script>
+
+    <<div class="results">
+        <p th:text="'Results for query: ' + ${results}"></p>
+    </div>>
+</body>
+
+</html>

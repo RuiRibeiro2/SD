@@ -2,9 +2,24 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="openai-repo" />
+      <option name="name" value="openai-repo" />
+      <option name="url" value="https://mvnrepository.com/artifact/com.theokanning.openai-gpt3-java" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="project-lombok" />
+      <option name="name" value="project-lombok" />
+      <option name="url" value="https://mvnrepository.com/artifact/org.projectlombok/lombok" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="openai-repo" />
+      <option name="name" value="openai-repo" />
+      <option name="url" value="https://github.com/theokanning/openai-java" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="central" />

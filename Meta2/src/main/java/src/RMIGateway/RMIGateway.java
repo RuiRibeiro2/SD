@@ -306,5 +306,9 @@ public class RMIGateway extends UnicastRemoteObject implements RMIGatewayInterfa
     public String getAdminMenu() throws RemoteException {
         return adminPage.getStringMenu();
     }
+    @Override
+    public boolean login(String username, String password) throws RemoteException {
+        return adminPage.login(username, password);
+    }
 
 }

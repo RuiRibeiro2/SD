@@ -1,6 +1,8 @@
 package src.RMIGateway;
 
 import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -251,6 +253,28 @@ public class AdminPage
      */
     public String getStringMenu() {
         return this.stringMenu;
+    }
+
+    public boolean login(String username, String password)
+    {
+        boolean result = false;
+        try
+        {
+            FileInputStream file = new FileInputStream(Configuration.CREDENTIALS_FILE);
+            ObjectInputStream in = new ObjectInputStream(file);
+
+            HashMap<String, String> users = (HashMap<String, String>) in.readObject();
+
+            if (users.containsKey(username) && users.get(username).equals(password)) {
+                result = true;
+            }
+
+            in.close();
+        } catch (Exception e) {
+            System.out.println("Error reading credentials");
+        }
+
+        return result;
     }
 
 

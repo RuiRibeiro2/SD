@@ -5,6 +5,7 @@ package src.RMIGateway;
  */
 public class Configuration
 {
+    public static final String CREDENTIALS_FILE = "credentials.bin";
     /**
      * Special scenarios trigger
      */
@@ -18,11 +19,11 @@ public class Configuration
     /**
      * TCP port of URLQueue for sending URLS
      */
-    public static final int SEND_PORT = 8080;
+    public static final int SEND_PORT = 8081;
     /**
      * TCP ports of URLQueue for receiving URLS
      */
-    public static final int RECEIVE_PORT = 8081;
+    public static final int RECEIVE_PORT = 8082;
     /**
      * Multicast port
      */
