@@ -16,8 +16,6 @@ public class AiController
 {
     private AiService aiService;
 
-
-
     @PostMapping("/generate-text")
     public List<String> generateText(@RequestBody AiRequestDTO aiRequestDTO) {
         return aiService.generateText(aiRequestDTO);

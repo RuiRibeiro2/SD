@@ -30,13 +30,18 @@ import src.RMIInterface.RMIGatewayInterface;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.theokanning.openai.client.OpenAiApi;
+
 import src.WebServer.HackerNewsAPI.HackerNewsAPI;
+import src.WebServer.OpenAI.AiRequestDTO;
+import src.WebServer.OpenAI.AiService;
 
 @Controller
 public class GoogolController
 {
     private RMIGatewayInterface gatewayInterface;
     private HackerNewsAPI hackerNewsAPI;
+    private AiService openai;
 
     private boolean userLogged = false;
     private String username;
@@ -51,7 +56,38 @@ public class GoogolController
     {
         this.gatewayInterface = gatewayInterface;
         this.hackerNewsAPI = new HackerNewsAPI();
+        this.openai = new AiService();
     }
+
+
+    @GetMapping("/OpenAI")
+    public String askGPT(@RequestParam(name = "prompt", required = false, defaultValue = "") String prompt,
+    Model model)
+    {
+
+        if (prompt.isEmpty())
+        {
+            // Returns "openai" view template, if there's nothing on the query
+            return "openai";
+        }
+        System.out.println("prompt = " + prompt);
+
+        try 
+        {
+            List<String> response = openai.generateText(new AiRequestDTO(prompt));
+            String message = "OpenAI 200";
+            model.addAttribute("results", message);
+        } catch (Exception e) {
+            System.out.println("Error connecting to server through '/openai'");
+        }
+        return "openai";
+    }
+
+
+
+
+
+
 
     // When the button is pressed, the form is submitted and we print the result in
     // the ${query} variable
@@ -96,7 +132,8 @@ public class GoogolController
         }
         System.out.println("url = " + url);
 
-        try {
+        try
+        {
             gatewayInterface.indexNewURL(url);
             String message = "URL has been indexed to queue";
             model.addAttribute("results", message);
