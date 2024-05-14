@@ -194,62 +194,9 @@ public class GoogolController
 
         return "listPages";
     }
-
-    @GetMapping("/IndexHackersByUsername")
-    public String IndexHackersByUsername(
-            @RequestParam(name = "username", required = false, defaultValue = "") String username, Model model)
-    {
-        List<String> results;
-
-        model.addAttribute("justClicked", true);
-
-        if (username == null || username.isEmpty()) {
-            return "IndexHackersByUsername";
-        }
-
-        try {
-            results = hackerNewsAPI.getUserStories(username);
-
-            if (results == null || results.isEmpty())
-            {
-                model.addAttribute("results", false);
-                model.addAttribute("justClicked", false);
-                model.addAttribute("hacker", username);
-                return "IndexHackersByUsername";
-            }
-
-            for (String url : results)
-            {
-                boolean searching = true;
-                while (searching)
-                {
-                    try
-                    {
-                        gatewayInterface.indexNewURL(url);
-                        searching = false;
-                    }
-                    catch (Exception e)
-                    {
-                        searching = true;
-                    }
-                }
-                gatewayInterface.indexNewURL(url);
-            }
-
-            model.addAttribute("justClicked", false);
-            model.addAttribute("results", true);
-            model.addAttribute("hacker", username);
-            System.out.println("results = " + results);
-
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-
-        return "IndexHackersByUsername";
-    }
-
     @GetMapping("/IndexHackersNews")
-    public String IndexHackersNews(Model model) {
+    public String IndexHackersNews(Model model) 
+    {
         List<String> results = new ArrayList<String>();
 
         model.addAttribute("hackerNewsResult", "Indexing Hacker News top stories...");
@@ -488,7 +435,7 @@ public class GoogolController
         String result;
         try {
             result = objectMapper.writeValueAsString(json);
-            printJSON(result);
+            //printJSON(result);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
