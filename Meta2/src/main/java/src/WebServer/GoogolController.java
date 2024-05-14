@@ -83,7 +83,45 @@ public class GoogolController
         return "openai";
     }
 
+    @GetMapping("/IndexHackersNews")
+    public String IndexHackersNews(String searchTerms,Model model)
+    {
+        List<String> results = new ArrayList<String>();
+        model.addAttribute("hackerNewsResult", "Indexing Hacker News top stories...");
 
+        try
+        {
+            results = hackerNewsAPI.getTopStoriesBySearchTerms(searchTerms);
+            if (results.isEmpty())
+            {
+                model.addAttribute("hackerNewsResult", "Error getting top stories from Hacker News!");
+                return "/";
+            }
+
+            for (String url : results)
+            {
+                boolean searching = true;
+                while (searching) {
+                    try {
+                        gatewayInterface.indexNewURL(url);
+                        searching = false;
+                    } catch (Exception e) {
+                        searching = true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            model.addAttribute("hackerNewsResult", "Ocorreu um erro ao indexar os top stories do Hacker News");
+            return "error";
+        }
+
+        model.addAttribute("hackerNewsBoolean", true);
+        model.addAttribute("hackerNewsResult", "Top stories from Hacker News indexed with success!");
+        model.addAttribute("username", this.username);
+        model.addAttribute("userLogged", this.userLogged);
+        return "menu";
+    }
 
 
 
@@ -117,10 +155,6 @@ public class GoogolController
         return "redirect:/getSearchResults/" + query + "?page=0";
     }
 
-    @GetMapping("/admin")
-    public String admin() {
-        return "admin";
-    }
     @GetMapping("/indexNewUrl")
     public String indexNewUrl(@RequestParam(name = "url", required = false, defaultValue = "") String url,
             Model model) {
@@ -194,44 +228,8 @@ public class GoogolController
 
         return "listPages";
     }
-    @GetMapping("/IndexHackersNews")
-    public String IndexHackersNews(Model model) 
-    {
-        List<String> results = new ArrayList<String>();
 
-        model.addAttribute("hackerNewsResult", "Indexing Hacker News top stories...");
 
-        try {
-            results = hackerNewsAPI.getTopStories();
-
-            if (results.isEmpty() || results == null) {
-                model.addAttribute("hackerNewsResult", "Error getting top stories from Hacker News!");
-                return "/";
-            }
-
-            for (String url : results) {
-                boolean searching = true;
-                while (searching) {
-                    try {
-                        gatewayInterface.indexNewURL(url);
-                        searching = false;
-                    } catch (Exception e) {
-                        searching = true;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-            model.addAttribute("hackerNewsResult", "Ocorreu um erro ao indexar os top stories do Hacker News");
-            return "error";
-        }
-
-        model.addAttribute("hackerNewsBoolean", true);
-        model.addAttribute("hackerNewsResult", "Top stories from Hacker News indexed with success!");
-        model.addAttribute("username", this.username);
-        model.addAttribute("userLogged", this.userLogged);
-        return "menu";
-    }
 
     @MessageMapping("/hello")
     @SendTo("/topic/admin")
