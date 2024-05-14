@@ -18,12 +18,11 @@ import java.util.List;
  */
 public class HackerNewsAPI
 {
-
     public List<String> getTopStoriesBySearchTerms(String searchTerms)
     {
+        System.out.printf("Search Terms: %s\n",searchTerms);
         List<String> searchTermsUrls = new ArrayList<String>();
         String[] keywords = searchTerms.split(" ");
-
         try
         {
             // URL that returns the top stories
@@ -58,7 +57,7 @@ public class HackerNewsAPI
             {
                 // Parse the JSON response
                 List<String> urlList = jsonParser(contentList, word,false);
-
+                System.out.println(urlList);
                 for(String x: urlList)
                 {
                     if(!searchTermsUrls.contains(x)) searchTermsUrls.add(x);
@@ -93,7 +92,7 @@ public class HackerNewsAPI
         int numThreads = 10; // Number of threads to create
 
         List<String> invalidURLS = new ArrayList<String>(); // List of Strings containing stories with invalid URLs
-
+        /*
         int numStories;
         if (user)
         {
@@ -103,6 +102,8 @@ public class HackerNewsAPI
         {
             numStories = 10; // Number of stories to get
         }
+         */
+        int numStories = contentList.length;
 
         for (int i = 0; i < numStories; i++)
         {
@@ -138,8 +139,15 @@ public class HackerNewsAPI
                             invalidURLS.add(storyObject.get("id").toString());
                             return;
                         }
-                        String title = (String) storyObject.get("title");
-                        if(title.contains(keyword)) urlList.add(storyObject.get("url").toString());
+
+                        // If the title contains the keyword, it will be added to be indexed later on
+                        String title = storyObject.get("title").toString().toLowerCase();
+                        System.out.println(title);
+                        if(title.contains(keyword))
+                        {
+                            System.out.printf("This one has %s!\n",keyword);
+                            urlList.add(storyObject.get("url").toString());
+                        }
 
                     } else {
                         System.out.println("No story content");

@@ -47,9 +47,10 @@
     #menu-h ul {
       max-width: 1000px;
       list-style: none;
-      padding: 0;
+      padding: 20px;
       display: flex;
-      flex-direction: column;
+      width: 500px;
+      flex-direction: line;
       align-items: center;
       justify-content: center;
     }
@@ -202,18 +203,17 @@
     </div>
   </h1>
 
+  <div class="src-box">
+    <input class="search" type="text" placeholder="  ">
+    <button type="reset"></button>
+  </div>
+
   <nav id="menu-h">
     <ul>
-      <li><a href="/search">Search</a></li>
+      <!--<li><a href="/search">Search</a></li>-->
       <li><a href="/indexNewUrl">Index New Url</a></li>
       <li><a href="/listPages">List Pages</a></li>
-      <li><a href="/IndexHackersNews">Index Hackers News</a></li>
-      <li><a href="/OpenAI">Ask ChatGPT</a></li>
-      <li th:if="${hackerNewsBoolean}" style="background-color: #F35C16;">
-        <a style="color:#FFF" href="/">The top stories of
-          Hacker News have been
-          indexed</a>
-      </li>
+      <li><a href="/Youtube">Youtube</a></li>
     </ul>
 
   </nav>
@@ -224,6 +224,20 @@
         th:text="${username}"></span></span>
     <a th:if="${userLogged}" href="/logout" class="register-button">Logout</a>
   </div>
+
+  <!-- when click enter e searchs -->
+  <script>
+    document.querySelector('.src-box input[type=text]').addEventListener('keyup', function (e)
+    {
+        if (e.keyCode == 13)
+        {
+            result = document.querySelector('.src-box input[type=text]').value
+            window.location.href = 'http://localhost:8080/getSearchResults/' + result + "?page=0";
+        }
+    });
+
+
+  </script>
 
 
 </body>

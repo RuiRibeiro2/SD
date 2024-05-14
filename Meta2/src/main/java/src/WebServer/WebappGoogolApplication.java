@@ -6,10 +6,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import retrofit2.http.PUT;
 import src.RMIGateway.Configuration;
 import src.RMIInterface.RMIGatewayInterface;
-import src.WebServer.OpenAI.AiService;
 
 @SpringBootApplication
 public class WebappGoogolApplication {
@@ -38,9 +36,5 @@ public class WebappGoogolApplication {
 		return gateway;
 	}
 
-	@Bean
-	public AiService getAiServiceBean() throws Exception
-	{
-        return new AiService();
-	}
+
 }

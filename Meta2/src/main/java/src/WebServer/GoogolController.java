@@ -22,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -33,16 +34,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.theokanning.openai.client.OpenAiApi;
 
 import src.WebServer.HackerNewsAPI.HackerNewsAPI;
-import src.WebServer.OpenAI.AiRequestDTO;
-import src.WebServer.OpenAI.AiService;
+import src.WebServer.YoutubeAPI.YoutubeAPI;
+
 
 @Controller
 public class GoogolController
 {
     private RMIGatewayInterface gatewayInterface;
     private HackerNewsAPI hackerNewsAPI;
-    private AiService openai;
 
+    private YoutubeAPI youtubeAPI;
     private boolean userLogged = false;
     private String username;
 
@@ -56,48 +57,46 @@ public class GoogolController
     {
         this.gatewayInterface = gatewayInterface;
         this.hackerNewsAPI = new HackerNewsAPI();
-        this.openai = new AiService();
+        this.youtubeAPI = new YoutubeAPI();
     }
 
 
-    @GetMapping("/OpenAI")
-    public String askGPT(@RequestParam(name = "prompt", required = false, defaultValue = "") String prompt,
+    @GetMapping("/Youtube")
+    public String searchYoutube(@RequestParam(name = "prompt", required = false, defaultValue = "") String prompt,
     Model model)
     {
-
         if (prompt.isEmpty())
         {
-            // Returns "openai" view template, if there's nothing on the query
-            return "openai";
+            // Returns "youutbe" view template, if there's nothing on the query
+            return "youtube";
         }
         System.out.println("prompt = " + prompt);
 
         try 
         {
-            List<String> response = openai.generateText(new AiRequestDTO(prompt));
-            String message = "OpenAI 200";
+            List<String> response = youtubeAPI.getYoutubeVideosUrls(prompt);
+            String message = "Youtube URLs retrieved!";
             model.addAttribute("results", message);
         } catch (Exception e) {
-            System.out.println("Error connecting to server through '/openai'");
+            System.out.println("Error connecting to server through '/Youtube'");
         }
-        return "openai";
+        return "youtube";
     }
 
-    @GetMapping("/IndexHackersNews")
-    public String IndexHackersNews(String searchTerms,Model model)
+    @PostMapping("/indexHackersNews")
+    public String IndexHackersNews(@RequestParam String queryParam)
     {
         List<String> results = new ArrayList<String>();
-        model.addAttribute("hackerNewsResult", "Indexing Hacker News top stories...");
-
+        //model.addAttribute("hackerNewsResult", "Indexing Hacker News top stories...");
+        System.out.printf("Search Terms: %s\n",queryParam);
         try
         {
-            results = hackerNewsAPI.getTopStoriesBySearchTerms(searchTerms);
+            results = hackerNewsAPI.getTopStoriesBySearchTerms(queryParam);
             if (results.isEmpty())
             {
-                model.addAttribute("hackerNewsResult", "Error getting top stories from Hacker News!");
-                return "/";
+                return "menu";
             }
-
+            System.out.println(results);
             for (String url : results)
             {
                 boolean searching = true;
@@ -112,19 +111,17 @@ public class GoogolController
             }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-            model.addAttribute("hackerNewsResult", "Ocorreu um erro ao indexar os top stories do Hacker News");
+            //model.addAttribute("hackerNewsResult", "Error indexing Hacker News stories");
             return "error";
         }
-
+        /*
         model.addAttribute("hackerNewsBoolean", true);
         model.addAttribute("hackerNewsResult", "Top stories from Hacker News indexed with success!");
         model.addAttribute("username", this.username);
         model.addAttribute("userLogged", this.userLogged);
+         */
         return "menu";
     }
-
-
-
 
 
     // When the button is pressed, the form is submitted and we print the result in
@@ -154,6 +151,11 @@ public class GoogolController
 
         return "redirect:/getSearchResults/" + query + "?page=0";
     }
+
+
+
+
+
 
     @GetMapping("/indexNewUrl")
     public String indexNewUrl(@RequestParam(name = "url", required = false, defaultValue = "") String url,
@@ -456,11 +458,12 @@ public class GoogolController
         List<String> aux = gatewayInterface.searchWords(query);
 
         // Envie a mensagem para os clientes conectados ao tópico "/topic/admin"
-        messagingTemplate.convertAndSend("/topic/admin", new Message(convertToJSON(gatewayInterface.getAdminMenu())));
+        // messagingTemplate.convertAndSend("/topic/admin", new Message(convertToJSON(gatewayInterface.getAdminMenu())));
 
-        if (aux.size() == 0) {
+        if (aux.size() == 0)
+        {
             model.addAttribute("noResults", true);
-            model.addAttribute("results", "Nenhum resultado encontrado!");
+            model.addAttribute("results", "No results!");
             return "getSearchResults";
         }
 
@@ -478,6 +481,43 @@ public class GoogolController
         resultsString = resultsString.replace(";", "<br>");
 
         model.addAttribute("results", resultsString);
+
         return "getSearchResults";
+    }
+
+
+    @GetMapping("getYoutubeResults/{query}")
+    public String getYoutubeResults(Model model, @PathVariable String query, @RequestParam(defaultValue = "0") int page)
+            throws Exception
+    {
+        List<String> strings = new ArrayList<>();
+        List<String> aux = youtubeAPI.getYoutubeVideosUrls(query);
+
+        // Envie a mensagem para os clientes conectados ao tópico "/topic/admin"
+        // messagingTemplate.convertAndSend("/topic/admin", new Message(convertToJSON(gatewayInterface.getAdminMenu())));
+
+        if (aux.size() == 0)
+        {
+            model.addAttribute("noResults", true);
+            model.addAttribute("results", "No results!");
+            return "getYoutubeResults";
+        }
+
+        int startIndex = page * 10;
+        int endIndex = Math.min(startIndex + 10, aux.size());
+
+        for (int i = startIndex; i < endIndex; i++) {
+            String s = aux.get(i);
+            strings.add(s);
+        }
+
+        String resultsString = String.join(",", strings);
+
+        resultsString = resultsString.replace(",", "<br><br>");
+        resultsString = resultsString.replace(";", "<br>");
+
+        model.addAttribute("results", resultsString);
+
+        return "getYoutubeResults";
     }
 }
