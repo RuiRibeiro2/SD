@@ -41,29 +41,33 @@
       justify-content: center;
       align-items: center;
       margin-top: 30px;
+      margin: 20px;
       height: 100%;
     }
 
     #menu-h ul {
       max-width: 1000px;
       list-style: none;
-      padding: 0;
+      padding: 10px;
       display: flex;
-      flex-direction: column;
+      width: 500px;
+      margin: 20px;
+      flex-direction: line;
       align-items: center;
       justify-content: center;
     }
 
     #menu-h ul li {
       display: vertical;
+      margin: 5px;
     }
 
     #menu-h ul li a {
       color: #FFF;
-      padding: 20px;
+      padding: 15px;
       display: inline-block;
       border: 2px solid black;
-      border-radius: 20px;
+      border-radius: 30px;
       text-decoration: none;
       transition: background .4s;
     }
@@ -83,43 +87,6 @@
         color: #fff;
     }
 
-    .LogReg {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-top: 30px;
-      position: absolute;
-      top: 0;
-      right: 0;
-      margin-right: 30px;
-    }
-
-    .username {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-top: 30px;
-      position: absolute;
-      top: 0;
-      left: 0;
-      margin-left: 30px;
-    }
-
-    .login-button,
-    .register-button {
-      color: #FFF;
-      padding: 10px 20px;
-      display: inline-block;
-      text-decoration: none;
-      transition: background .4s;
-      background-color: hsl(19, 90%, 52%);
-      margin-left: 10px;
-    }
-
-    .login-button:hover,
-    .register-button:hover {
-      background-color: hsl(19, 70%, 42%);
-    }
 
     <!--
     CSS for Admin table
@@ -202,28 +169,36 @@
     </div>
   </h1>
 
+  <div class="src-box">
+    <input class="search" type="text" placeholder="  ">
+    <button type="reset"></button>
+  </div>
+
   <nav id="menu-h">
     <ul>
-      <li><a href="/search">Search</a></li>
+      <!--<li><a href="/search">Search</a></li>-->
       <li><a href="/indexNewUrl">Index New Url</a></li>
       <li><a href="/listPages">List Pages</a></li>
-      <li><a href="/IndexHackersNews">Index Hackers News</a></li>
-      <li><a href="/OpenAI">Ask ChatGPT</a></li>
-      <li th:if="${hackerNewsBoolean}" style="background-color: #F35C16;">
-        <a style="color:#FFF" href="/">The top stories of
-          Hacker News have been
-          indexed</a>
-      </li>
+      <li><a href="/IndexHackersByUsername">Index Hackers By Username</a></li>
+      <li><a href="/Youtube">Youtube</a></li>
     </ul>
 
   </nav>
-  <div class="LogReg">
-    <a th:unless="${userLogged}" href="/login" class="login-button">Login</a>
-    <a th:unless="${userLogged}" href="/register" class="register-button">Register</a>
-    <span th:if="${userLogged}" style="font-size: 14px; color: #478dcb; margin-right: 10px;">Logged in as <span
-        th:text="${username}"></span></span>
-    <a th:if="${userLogged}" href="/logout" class="register-button">Logout</a>
-  </div>
+
+
+  <!-- when click enter e searchs -->
+  <script>
+    document.querySelector('.src-box input[type=text]').addEventListener('keyup', function (e)
+    {
+        if (e.keyCode == 13)
+        {
+            result = document.querySelector('.src-box input[type=text]').value
+            window.location.href = 'http://localhost:8080/getSearchResults/' + result + "?page=0";
+        }
+    });
+
+
+  </script>
 
 
 </body>

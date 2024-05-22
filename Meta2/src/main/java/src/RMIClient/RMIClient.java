@@ -9,6 +9,9 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Class that runs a client program
@@ -82,12 +85,12 @@ public class RMIClient
                         {
                             // Print and flush content at a fixed rate
                             try {
-                                System.out.print("\033[H\033[2J");
-                                System.out.flush();
-                                System.out.println(gateway.getAdminMenu());
+                            System.out.print("\033[H\033[2J");
+                            System.out.flush();
+                            System.out.println(gateway.getAdminMenu());
                             } catch (RemoteException e) {
                                 throw new RuntimeException(e);
-                            }
+                        }
                         }
                     };
 

@@ -10,12 +10,17 @@ import src.RMIGateway.Configuration;
 import src.RMIInterface.RMIGatewayInterface;
 
 @SpringBootApplication
-public class WebappGoogolApplication {
-
+public class SpringBootGoogolApplication
+{
 	public static void main(String[] args) {
-		SpringApplication.run(WebappGoogolApplication.class, args);
+		SpringApplication.run(SpringBootGoogolApplication.class, args);
 	}
 
+	/**
+	 * Allows the RMIGateway to be accessible to clients through the Web
+	 * @return Interface to interact with the Gateway server
+	 * @throws Exception
+	 */
 	@Bean
 	public RMIGatewayInterface searchGateway() throws Exception
 	{
