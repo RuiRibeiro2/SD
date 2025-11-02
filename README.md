@@ -147,6 +147,14 @@ You must enable **YouTube Data API v3** in your Google Cloud Console and set:
 bash
 export GOOGLE_API_KEY="your_api_key_here"
 
+### HackerNews API
+Implemented in src/WebServer/HackerNewsAPI/HackerNewsAPI.java.
+It queries the official Hacker News Firebase REST API, supporting:
+
+Retrieval of top stories containing certain keywords
+
+Retrieval of stories submitted by a given user
+
 
 ## This project was developed exclusively for academic purposes under the course Sistemas Distribuídos (FCTUC), 2024/2025.
 
